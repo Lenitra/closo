@@ -16,5 +16,3 @@ class UserRepository(BaseRepository[User]):
         """Get users by role name"""
         statement = select(User).where(User.roles.__contains__(role_name))
         return list(db.exec(statement).all())
-
-

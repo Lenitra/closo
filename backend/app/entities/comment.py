@@ -4,6 +4,7 @@ from datetime import datetime
 from app.entities.post import Post
 from app.entities.user import User
 
+
 class Comment(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     post_id: Post = Field()

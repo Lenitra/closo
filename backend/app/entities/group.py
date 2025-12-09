@@ -3,6 +3,7 @@ from typing import Optional
 
 from app.entities.user import User
 
+
 class Group(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     nom: str = Field()

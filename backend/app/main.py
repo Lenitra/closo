@@ -14,7 +14,6 @@ import pathlib
 entities_dir = pathlib.Path(__file__).parent / "entities"
 
 
-
 for module_info in pkgutil.iter_modules([str(entities_dir)]):
     name = module_info.name
     if name.startswith("_"):
@@ -55,7 +54,6 @@ app = FastAPI(
 routers_dir = pathlib.Path(__file__).parent / "routers"
 
 
-
 for module_info in pkgutil.iter_modules([str(routers_dir)]):
     name = module_info.name
     if name.startswith("_"):
@@ -84,8 +82,6 @@ for module_info in pkgutil.iter_modules([str(routers_dir)]):
         print(f"❌ Warning: Could not import router {name}: {e}")
         print(f"❌ Warning: Could not import router {name}: {e}")
         print(f"❌ Warning: Could not import router {name}: {e}")
-
-
 
 
 @app.get("/health")

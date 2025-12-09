@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Closo"
     VERSION: str = "0.1.0"
@@ -17,8 +18,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-
     class Config:
         env_file = ".env"
+
 
 settings = Settings()

@@ -27,12 +27,9 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
         )
 
-    access_token = create_access_token(
-        user_id=user.id,
-        active_role=user.active_role
-    )
+    access_token = create_access_token(user_id=user.id, active_role=user.active_role)
     return {
-        "access_token": access_token, 
-        "token_type": "bearer", 
+        "access_token": access_token,
+        "token_type": "bearer",
         "active_role": user.active_role,
     }
