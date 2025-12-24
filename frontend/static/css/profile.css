@@ -1,59 +1,26 @@
 /* ==========================================================================
-   Closo Group Page - Instagram Style
+   Closo Profile Page
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Header
+   Profile Header
    -------------------------------------------------------------------------- */
-.header-left {
+.profile-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--spacing-sm);
-    min-width: 0;
-    flex: 1;
-}
-
-.header-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--color-gray-900);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.back-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    color: var(--color-gray-600);
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.back-btn:hover {
-    background: var(--color-gray-100);
-    color: var(--color-gray-900);
-}
-
-/* --------------------------------------------------------------------------
-   Group Banner (Instagram Profile Style)
-   -------------------------------------------------------------------------- */
-.group-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xl);
-    padding: var(--spacing-lg) 0;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl) 0;
     border-bottom: 1px solid var(--color-gray-100);
 }
 
-.group-banner-avatar {
-    width: 80px;
-    height: 80px;
+.profile-avatar-container {
+    position: relative;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
     border-radius: var(--radius-full);
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     display: flex;
@@ -61,18 +28,62 @@
     justify-content: center;
     color: white;
     font-weight: 700;
-    font-size: 1.75rem;
-    flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    font-size: 2.5rem;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
 }
 
-.group-banner-info {
-    flex: 1;
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.group-stats {
+.avatar-edit-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-100);
+    border-radius: var(--radius-full);
     display: flex;
-    gap: var(--spacing-xl);
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-600);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.avatar-edit-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.profile-info {
+    text-align: center;
+}
+
+.profile-username {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-xs);
+}
+
+.profile-email {
+    font-size: 0.9rem;
+    color: var(--color-gray-500);
+    margin: 0 0 var(--spacing-md);
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-3xl);
 }
 
 .stat-item {
@@ -93,34 +104,52 @@
 }
 
 /* --------------------------------------------------------------------------
-   Group Description
+   Profile Actions
    -------------------------------------------------------------------------- */
-.group-description {
+.profile-actions {
+    display: flex;
+    gap: var(--spacing-sm);
     padding: var(--spacing-md) 0;
     border-bottom: 1px solid var(--color-gray-100);
 }
 
-.group-description:empty,
-.group-description.hidden {
-    display: none;
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-gray-100);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+    transition: all var(--transition-fast);
 }
 
-.group-description p {
-    font-size: 0.9rem;
-    color: var(--color-gray-700);
-    line-height: 1.5;
-    margin: 0;
+.action-btn:hover {
+    background: var(--color-gray-200);
+}
+
+.action-btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.action-btn-primary:hover {
+    background: var(--color-primary-dark);
 }
 
 /* --------------------------------------------------------------------------
-   View Toggle
+   Tabs
    -------------------------------------------------------------------------- */
-.view-toggle {
+.profile-tabs {
     display: flex;
     border-bottom: 1px solid var(--color-gray-100);
 }
 
-.view-btn {
+.tab-btn {
     flex: 1;
     display: flex;
     align-items: center;
@@ -134,26 +163,31 @@
     transition: all var(--transition-fast);
 }
 
-.view-btn:hover {
+.tab-btn:hover {
     color: var(--color-gray-600);
 }
 
-.view-btn.active {
+.tab-btn.active {
     color: var(--color-gray-900);
     border-bottom-color: var(--color-gray-900);
 }
 
-.view-btn svg {
+.tab-btn svg {
     flex-shrink: 0;
 }
 
-/* --------------------------------------------------------------------------
-   Posts Grid (Instagram Style)
-   -------------------------------------------------------------------------- */
-.posts-section {
-    padding-top: var(--spacing-md);
+.tab-content {
+    display: none;
+    padding: var(--spacing-md) 0;
 }
 
+.tab-content.active {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Posts Grid (reuse from group.css)
+   -------------------------------------------------------------------------- */
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -185,14 +219,13 @@
     inset: 0;
     background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.5) 0%,
-        transparent 30%,
-        transparent 60%,
+        transparent 0%,
+        transparent 50%,
         rgba(0, 0, 0, 0.6) 100%
     );
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: var(--spacing-sm);
     opacity: 0;
     transition: opacity var(--transition-fast);
@@ -202,47 +235,32 @@
     opacity: 1;
 }
 
-/* Header avec avatar et username */
-.post-thumbnail-header {
+.post-thumbnail-group {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
 }
 
-.post-thumbnail-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-full);
+.post-thumbnail-group-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: 600;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     flex-shrink: 0;
 }
 
-.post-thumbnail-username {
+.post-thumbnail-group-name {
     color: white;
-    font-weight: 600;
-    font-size: 0.85rem;
+    font-weight: 500;
+    font-size: 0.75rem;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Caption en bas */
-.post-thumbnail-caption {
-    margin-top: auto;
-}
-
-.post-thumbnail-caption p {
-    color: white;
-    font-size: 0.8rem;
-    line-height: 1.4;
-    margin: 0;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-/* Indicateur de médias multiples */
 .post-thumbnail-multiple {
     position: absolute;
     top: 8px;
@@ -261,6 +279,100 @@
     width: 16px;
     height: 16px;
     color: white;
+}
+
+/* --------------------------------------------------------------------------
+   Settings List
+   -------------------------------------------------------------------------- */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.settings-group-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.settings-item:hover {
+    background: var(--color-gray-50);
+}
+
+.settings-item-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-600);
+    flex-shrink: 0;
+}
+
+.settings-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.settings-item-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-gray-900);
+}
+
+.settings-item-description {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+}
+
+.settings-item-arrow {
+    color: var(--color-gray-400);
+    flex-shrink: 0;
+}
+
+.settings-item-danger {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.settings-item-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.settings-item-danger .settings-item-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.settings-item-danger .settings-item-label {
+    color: #ef4444;
 }
 
 /* --------------------------------------------------------------------------
@@ -291,7 +403,111 @@
 }
 
 /* --------------------------------------------------------------------------
-   Post Detail Modal (Instagram Style)
+   Modals
+   -------------------------------------------------------------------------- */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+}
+
+.form-group input {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--color-gray-400);
+    margin: 0;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+    padding-right: 44px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: var(--spacing-sm);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-400);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.password-toggle:hover {
+    color: var(--color-gray-600);
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.btn-secondary,
+.btn-primary {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.btn-secondary:hover {
+    background: var(--color-gray-200);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Post Detail Modal (reuse from group.css)
    -------------------------------------------------------------------------- */
 .modal-post-detail {
     max-width: 900px;
@@ -339,7 +555,6 @@
     object-fit: contain;
 }
 
-/* Carrousel */
 .carousel {
     width: 100%;
     height: 100%;
@@ -442,6 +657,17 @@
     flex: 1;
 }
 
+.post-author {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.post-time {
+    font-size: 0.75rem;
+    color: var(--color-gray-400);
+}
+
 .download-btn {
     width: 40px;
     height: 40px;
@@ -459,17 +685,6 @@
     color: var(--color-primary);
 }
 
-.post-author {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-gray-900);
-}
-
-.post-time {
-    font-size: 0.75rem;
-    color: var(--color-gray-400);
-}
-
 .post-detail-caption {
     flex: 1;
     overflow-y: auto;
@@ -483,112 +698,58 @@
     white-space: pre-wrap;
 }
 
-
-/* --------------------------------------------------------------------------
-   Floating Action Button
-   -------------------------------------------------------------------------- */
-.fab {
-    position: fixed;
-    bottom: var(--spacing-xl);
-    right: var(--spacing-lg);
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: white;
+.post-detail-group {
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-    transition: all var(--transition-base);
-    z-index: 50;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-100);
 }
 
-.fab:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
-}
-
-.fab:active {
-    transform: scale(0.98);
-}
-
-/* --------------------------------------------------------------------------
-   Upload Zone
-   -------------------------------------------------------------------------- */
-.upload-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xl);
-    border: 2px dashed var(--color-gray-300);
-    border-radius: var(--radius-lg);
+.post-group-label {
+    font-size: 0.8rem;
     color: var(--color-gray-400);
-    cursor: pointer;
-    transition: all var(--transition-fast);
 }
 
-.upload-zone:hover,
-.upload-zone.dragover {
-    border-color: var(--color-primary);
+.post-group-link {
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--color-primary);
-    background: rgba(99, 102, 241, 0.02);
+    transition: color var(--transition-fast);
 }
 
-.upload-zone span {
-    font-size: 0.9rem;
-    text-align: center;
-}
-
-.image-preview {
-    position: relative;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-}
-
-.image-preview img {
-    width: 100%;
-    max-height: 300px;
-    object-fit: cover;
-}
-
-.remove-image {
-    position: absolute;
-    top: var(--spacing-sm);
-    right: var(--spacing-sm);
-    width: 32px;
-    height: 32px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    transition: all var(--transition-fast);
-}
-
-.remove-image:hover {
-    background: rgba(0, 0, 0, 0.8);
+.post-group-link:hover {
+    color: var(--color-primary-dark);
 }
 
 /* --------------------------------------------------------------------------
    Desktop Styles
    -------------------------------------------------------------------------- */
 @media (min-width: 640px) {
-    .group-banner-avatar {
-        width: 100px;
-        height: 100px;
-        font-size: 2.25rem;
+    .profile-header {
+        flex-direction: row;
+        gap: var(--spacing-xl);
+        padding: var(--spacing-xl) 0;
     }
 
-    .group-stats {
-        gap: var(--spacing-3xl);
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        font-size: 3rem;
     }
 
-    .stat-value {
-        font-size: 1.5rem;
+    .avatar-edit-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .profile-info {
+        text-align: left;
+        flex: 1;
+    }
+
+    .profile-stats {
+        justify-content: flex-start;
     }
 
     .posts-grid {
@@ -617,20 +778,12 @@
         max-height: 80vh;
         overflow-y: auto;
     }
-
-    .fab {
-        right: calc(50% - 300px - 30px);
-    }
 }
 
 @media (min-width: 1024px) {
-    .group-banner-avatar {
-        width: 120px;
-        height: 120px;
-        font-size: 2.5rem;
-    }
-
-    .fab {
-        right: calc(50% - 350px - 30px);
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        font-size: 3.5rem;
     }
 }

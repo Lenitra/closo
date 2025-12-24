@@ -18,11 +18,14 @@ const GROUP_COLORS = [
 let currentGroupId = null;
 let currentGroup = null;
 let posts = [];
+let allMedias = [];
+let currentView = 'posts'; // 'posts' ou 'medias'
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     initGroupPage();
     initDetailModal();
+    initViewToggle();
 });
 
 // --------------------------------------------------------------------------
@@ -129,6 +132,39 @@ function updateStats(postsCount, membersCount) {
 }
 
 // --------------------------------------------------------------------------
+// View Toggle
+// --------------------------------------------------------------------------
+function initViewToggle() {
+    const viewPostsBtn = document.getElementById('viewPosts');
+    const viewMediasBtn = document.getElementById('viewMedias');
+
+    if (viewPostsBtn) {
+        viewPostsBtn.addEventListener('click', () => switchView('posts'));
+    }
+    if (viewMediasBtn) {
+        viewMediasBtn.addEventListener('click', () => switchView('medias'));
+    }
+}
+
+function switchView(view) {
+    currentView = view;
+
+    // Update active button
+    const viewPostsBtn = document.getElementById('viewPosts');
+    const viewMediasBtn = document.getElementById('viewMedias');
+
+    if (view === 'posts') {
+        viewPostsBtn.classList.add('active');
+        viewMediasBtn.classList.remove('active');
+        renderPosts(posts);
+    } else {
+        viewPostsBtn.classList.remove('active');
+        viewMediasBtn.classList.add('active');
+        renderMediasOnly(allMedias);
+    }
+}
+
+// --------------------------------------------------------------------------
 // Load Posts
 // --------------------------------------------------------------------------
 function loadPosts() {
@@ -148,6 +184,9 @@ function loadPosts() {
         return response.json();
     })
     .then(medias => {
+        // Stocker tous les médias pour la vue "medias"
+        allMedias = medias;
+
         // Grouper les médias par post_id
         const postMap = new Map();
 
@@ -169,7 +208,12 @@ function loadPosts() {
             return dateB - dateA;
         });
 
-        renderPosts(posts);
+        // Afficher selon la vue actuelle
+        if (currentView === 'posts') {
+            renderPosts(posts);
+        } else {
+            renderMediasOnly(allMedias);
+        }
         updateStats(posts.length, currentGroup?.members_count);
     })
     .catch(error => {
@@ -262,6 +306,129 @@ function createPostThumbnail(post, index) {
             </div>
         </div>
     `;
+}
+
+// --------------------------------------------------------------------------
+// Render Medias Only (without grouping by post)
+// --------------------------------------------------------------------------
+function renderMediasOnly(mediasData) {
+    const postsGrid = document.getElementById('postsGrid');
+    if (!postsGrid) return;
+
+    if (!mediasData || mediasData.length === 0) {
+        postsGrid.innerHTML = `
+            <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                    <path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p>Aucun media</p>
+                <p class="empty-subtitle">Partagez votre premier moment !</p>
+            </div>
+        `;
+        return;
+    }
+
+    postsGrid.innerHTML = mediasData.map((media, index) => createMediaThumbnail(media, index)).join('');
+
+    // Ajouter les event listeners pour ouvrir le detail
+    postsGrid.querySelectorAll('.post-thumbnail').forEach((thumbnail, index) => {
+        thumbnail.addEventListener('click', () => openMediaDetail(index));
+    });
+}
+
+function createMediaThumbnail(media, index) {
+    const mediaUrl = getMediaUrl(media.media_url);
+
+    // Infos utilisateur
+    const groupMember = media.post?.group_member;
+    const user = groupMember?.user;
+    const username = user?.username || 'Utilisateur';
+    const initial = username.charAt(0).toUpperCase();
+    const userId = user?.id || index;
+    const avatarColor = GROUP_COLORS[userId % GROUP_COLORS.length];
+
+    return `
+        <div class="post-thumbnail" data-index="${index}">
+            <img src="${mediaUrl}" alt="Media" loading="lazy">
+            <div class="post-thumbnail-overlay">
+                <div class="post-thumbnail-header">
+                    <div class="post-thumbnail-avatar" style="background: ${avatarColor}">
+                        <span>${initial}</span>
+                    </div>
+                    <span class="post-thumbnail-username">${escapeHtml(username)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+let currentMediaIndex = 0;
+
+function openMediaDetail(index) {
+    const media = allMedias[index];
+    if (!media) return;
+
+    currentMediaIndex = index;
+    renderMediaDetail();
+
+    const modal = document.getElementById('postDetailModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function renderMediaDetail() {
+    const media = allMedias[currentMediaIndex];
+    if (!media) return;
+
+    const detailImage = document.getElementById('detailImage');
+    const detailAvatar = document.getElementById('detailAvatar');
+    const detailAvatarInitial = document.getElementById('detailAvatarInitial');
+    const detailAuthor = document.getElementById('detailAuthor');
+    const detailCaption = document.getElementById('detailCaption');
+    const detailTime = document.getElementById('detailTime');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    const indicators = document.getElementById('carouselIndicators');
+
+    // Image
+    if (detailImage) {
+        detailImage.src = getMediaUrl(media.media_url);
+    }
+
+    // Auteur
+    const groupMember = media.post?.group_member;
+    const user = groupMember?.user;
+    const username = user?.username || 'Utilisateur';
+    const initial = username.charAt(0).toUpperCase();
+
+    if (detailAvatarInitial) detailAvatarInitial.textContent = initial;
+    if (detailAuthor) detailAuthor.textContent = username;
+
+    if (detailAvatar && user) {
+        const colorIndex = (user.id || 0) % GROUP_COLORS.length;
+        detailAvatar.style.background = GROUP_COLORS[colorIndex];
+    }
+
+    // Caption
+    if (detailCaption) {
+        const captionP = detailCaption.querySelector('p');
+        if (captionP) {
+            captionP.textContent = media.post?.caption || '';
+        }
+        detailCaption.style.display = media.post?.caption ? 'block' : 'none';
+    }
+
+    // Date
+    if (detailTime && media.post?.created_at) {
+        detailTime.textContent = formatTimeAgo(media.post.created_at);
+    }
+
+    // Navigation entre medias (pas de carrousel, navigation entre tous les medias)
+    prevBtn.hidden = currentMediaIndex === 0;
+    nextBtn.hidden = currentMediaIndex === allMedias.length - 1;
+    indicators.innerHTML = '';
 }
 
 // --------------------------------------------------------------------------
@@ -423,6 +590,17 @@ function updateCarousel() {
 }
 
 function navigateCarousel(direction) {
+    // En mode "medias", naviguer entre tous les medias
+    if (currentView === 'medias') {
+        const newIndex = currentMediaIndex + direction;
+        if (newIndex >= 0 && newIndex < allMedias.length) {
+            currentMediaIndex = newIndex;
+            renderMediaDetail();
+        }
+        return;
+    }
+
+    // En mode "posts", naviguer dans le carrousel du post
     const post = posts[currentDetailPostIndex];
     if (!post) return;
 
@@ -434,25 +612,30 @@ function navigateCarousel(direction) {
 }
 
 async function downloadCurrentImage() {
-    const post = posts[currentDetailPostIndex];
-    if (!post || !post.medias || post.medias.length === 0) return;
+    let imageUrl, filename;
 
-    const currentMedia = post.medias[currentDetailMediaIndex];
-    if (!currentMedia) return;
-
-    const imageUrl = getMediaUrl(currentMedia.media_url);
+    if (currentView === 'medias') {
+        const media = allMedias[currentMediaIndex];
+        if (!media) return;
+        imageUrl = getMediaUrl(media.media_url);
+        filename = `closo_media_${currentMediaIndex + 1}`;
+    } else {
+        const post = posts[currentDetailPostIndex];
+        if (!post || !post.medias || post.medias.length === 0) return;
+        const currentMedia = post.medias[currentDetailMediaIndex];
+        if (!currentMedia) return;
+        imageUrl = getMediaUrl(currentMedia.media_url);
+        filename = `closo_${post.id}_${currentDetailMediaIndex + 1}`;
+    }
 
     try {
-        // Fetch l'image
         const response = await fetch(imageUrl);
         const blob = await response.blob();
 
-        // Créer un lien de téléchargement
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
 
-        // Déterminer l'extension à partir du Content-Type
         const contentType = response.headers.get('content-type') || blob.type;
         let extension = 'jpg';
         if (contentType.includes('png')) {
@@ -465,21 +648,18 @@ async function downloadCurrentImage() {
             extension = 'jpg';
         }
 
-        const filename = `closo_${post.id}_${currentDetailMediaIndex + 1}.${extension}`;
-        a.download = filename;
+        a.download = `${filename}.${extension}`;
 
-        // Déclencher le téléchargement
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
-        // Libérer l'URL
         window.URL.revokeObjectURL(url);
 
-        showNotification('Image téléchargée !');
+        showNotification('Image telechargee !');
     } catch (error) {
-        console.error('Erreur lors du téléchargement:', error);
-        showNotification('Erreur lors du téléchargement', 'error');
+        console.error('Erreur lors du telechargement:', error);
+        showNotification('Erreur lors du telechargement', 'error');
     }
 }
 
@@ -510,15 +690,11 @@ function formatTimeAgo(dateString) {
     if (!dateString) return '';
 
     const date = new Date(dateString);
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
 
-    if (diff < 60) return 'A l\'instant';
-    if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
-    if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
-    if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)} j`;
-
-    return formatDate(dateString);
+    return `${day}/${month}/${year}`;
 }
 
 // --------------------------------------------------------------------------
