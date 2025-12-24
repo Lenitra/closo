@@ -1,6 +1,6 @@
 from fastapi import Body, APIRouter, HTTPException, Depends
+from sqlmodel import Session
 from app.entities.groupmember import GroupMember
-from sqlalchemy.orm import Session
 from app.repositories.groupmember_repository import GroupMemberRepository
 from app.utils.core.database import get_db
 from app.utils.auth.roles import require_role
@@ -13,7 +13,7 @@ repo = GroupMemberRepository()
 @router.get(
     "/",
     response_model=list[GroupMember],
-    description="Route disponible pour les rôles: ['User']",
+    description="Route disponible pour les rôles: ['admin']",
 )
 def get_all_groupmembers(
     db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))
@@ -24,7 +24,7 @@ def get_all_groupmembers(
 @router.get(
     "/{id}",
     response_model=GroupMember,
-    description="Route disponible pour les rôles: ['User']",
+    description="Route disponible pour les rôles: ['admin']",
 )
 def get_groupmember_by_id(
     id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))
@@ -39,7 +39,7 @@ def get_groupmember_by_id(
     "/",
     response_model=GroupMember,
     status_code=201,
-    description="Route disponible pour les rôles: ['User']",
+    description="Route disponible pour les rôles: ['admin']",
 )
 def create_groupmember(
     payload: dict = Body(...),
@@ -52,7 +52,7 @@ def create_groupmember(
 @router.put(
     "/{id}",
     response_model=GroupMember,
-    description="Route disponible pour les rôles: ['User']",
+    description="Route disponible pour les rôles: ['admin']",
 )
 def update_groupmember(
     id: int,
@@ -67,7 +67,7 @@ def update_groupmember(
 
 
 @router.delete(
-    "/{id}", status_code=204, description="Route disponible pour les rôles: ['User']"
+    "/{id}", status_code=204, description="Route disponible pour les rôles: ['admin']"
 )
 def delete_groupmember(
     id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))

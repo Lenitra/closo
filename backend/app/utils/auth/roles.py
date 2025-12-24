@@ -6,9 +6,9 @@ from app.entities.role import Role
 from sqlmodel import Session
 from app.utils.auth.auth import decode_access_token
 from app.utils.core.database import get_db
-from app.repositories.auth.user_repository import UserRepository
+from app.repositories.user_repository import UserRepository
 from app.entities.user import User
-from app.repositories.auth.role_repository import RoleRepository
+from app.repositories.role_repository import RoleRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -42,13 +42,11 @@ def get_current_user(
             )
 
         print(f"Retour de l'utilisateur: {user.email}")  # Debug
-        return user
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
             )
-
         return user
     except JWTError:
         raise HTTPException(
@@ -57,26 +55,26 @@ def get_current_user(
         )
 
 
-def require_role(permited_role: List[str]) -> int:
+def require_role(permitted_roles: List[str]) -> int:
     """Decorator to require one of multiple roles from JWT token"""
 
     def role_checker(
         current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
     ):
         if (
-            not permited_role
-            or "*" in permited_role
-            or "any" in permited_role
-            or len(permited_role) == 0
+            not permitted_roles
+            or "*" in permitted_roles
+            or "any" in permitted_roles
+            or len(permitted_roles) == 0
         ):
-            return current_user.active_role
+            return current_user.id
 
-        active_user_role: Role = role_repo.get_by_id(db, current_user.active_role)
-        if active_user_role.name not in permited_role:
+        user_role: Role = role_repo.get_by_id(db, current_user.role_id)
+        if user_role.name not in permitted_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access forbidden: one of {permited_role} roles required, got {active_user_role.name}",
+                detail=f"Access forbidden: one of {permitted_roles} roles required, got {user_role.name}",
             )
-        return current_user.active_role
+        return current_user.id
 
     return role_checker

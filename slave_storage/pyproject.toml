@@ -1,0 +1,12 @@
+[project]
+name = "slave-storage"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "fastapi>=0.125.0",
+    "uvicorn>=0.38.0",
+    "python-multipart>=0.0.12",
+]

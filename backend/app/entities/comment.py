@@ -1,13 +1,17 @@
-from sqlmodel import SQLModel, Field
-from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
+from datetime import datetime, timezone
+from typing import Optional, TYPE_CHECKING
 
-from app.entities.post import Post
-from app.entities.user import User
+if TYPE_CHECKING:
+    from app.entities.user import User
+    from app.entities.post import Post
 
 
 class Comment(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    post_id: Post = Field()
-    user_id: User = Field()
+    __tablename__ = "comment"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="post.id")
+    group_member: int = Field(foreign_key="groupmember.id")
     text: str = Field()
-    created_at: datetime = Field()
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))

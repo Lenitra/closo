@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from typing import Optional
+from sqlmodel import Session, select
 from app.repositories.base_repository import BaseRepository
 from app.entities.groupmember import GroupMember
 
@@ -6,3 +7,12 @@ from app.entities.groupmember import GroupMember
 class GroupMemberRepository(BaseRepository[GroupMember]):
     def __init__(self):
         super().__init__(GroupMember)
+
+    def get_by_user_and_group(
+        self, db: Session, user_id: int, group_id: int
+    ) -> Optional[GroupMember]:
+        """Get GroupMember by user_id and group_id"""
+        statement = select(GroupMember).where(
+            GroupMember.user_id == user_id, GroupMember.group_id == group_id
+        )
+        return db.exec(statement).first()

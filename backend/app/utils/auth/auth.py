@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.utils.core.config import settings
@@ -14,9 +14,9 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(user_id: int, active_role: int) -> str:
-    to_encode = {"sub": str(user_id), "active_role": str(active_role)}
-    expire = datetime.utcnow() + (
+def create_access_token(user_id: int, role_id: int) -> str:
+    to_encode = {"sub": str(user_id), "role_id": str(role_id)}
+    expire = datetime.now(timezone.utc) + (
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode.update({"exp": expire})
@@ -24,13 +24,22 @@ def create_access_token(user_id: int, active_role: int) -> str:
 
 
 def decode_access_token(token: str) -> dict:
-    print(f"Decoding token: {token}")
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     user_id = payload.get("sub")
-    active_role = payload.get("active_role")
-    if user_id is None or active_role is None:
-        print(f"Decoded payload missing user_id or active_role: {payload}")
-        raise JWTError("Missing user_id or active_role in token")
+    role_id = payload.get("role_id")
+    return {"role_id": role_id, "sub": user_id}
 
-    print(f"Decoded token for user_id: {user_id}, active_role: {active_role}")
-    return {"active_role": active_role, "sub": user_id}
+
+def refresh_access_token(token: str) -> str:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"verify_exp": False},
+        )
+        user_id = payload.get("sub")
+        role_id = payload.get("role_id")
+        return create_access_token(user_id=int(user_id), role_id=int(role_id))
+    except JWTError:
+        raise ValueError("Invalid token")
