@@ -16,3 +16,5 @@ class GroupRepository(BaseRepository[Group]):
             .where(GroupMember.user_id == user_id)
         )
         return db.exec(statement).all()
+
+    

@@ -2,12 +2,14 @@ from fastapi import Body, APIRouter, HTTPException, Depends
 from sqlmodel import Session
 from app.entities.group import Group, GroupRead
 from app.repositories.group_repository import GroupRepository
+from app.repositories.groupmember_repository import GroupMemberRepository
 from app.utils.core.database import get_db
 from app.utils.auth.roles import require_role
 
 
 router = APIRouter(prefix="/groups", tags=["Group"])
 repo = GroupRepository()
+member_repo = GroupMemberRepository()
 
 
 @router.get(
@@ -60,6 +62,22 @@ def create_group(
 def delete_group(
     id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["Any"]))
 ):
-    ok = repo.delete(db, id)
+    # TODO: Ajouter une vérification pour s'assurer que l'utilisateur est bien le créateur du groupe
+    # ok = repo.delete(db, id)
+    ok = False
     if not ok:
         raise HTTPException(status_code=404, detail="Group not found")
+
+
+@router.get(
+    "/{id}/members/count",
+    response_model=dict,
+    description="Route permettant de récupérer le nombre de membres d'un groupe.",
+)
+def get_group_members_count(
+    id: int,
+    db: Session = Depends(get_db),
+    _=Depends(require_role(["any"])),
+):
+    count = member_repo.count_members_in_group(db, id)
+    return {"count": count}

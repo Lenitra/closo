@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from app.repositories.base_repository import BaseRepository
 from app.entities.groupmember import GroupMember
 
@@ -16,3 +16,10 @@ class GroupMemberRepository(BaseRepository[GroupMember]):
             GroupMember.user_id == user_id, GroupMember.group_id == group_id
         )
         return db.exec(statement).first()
+
+    def count_members_in_group(self, db: Session, group_id: int) -> int:
+        """Count the number of members in a specific group"""
+        statement = select(func.count(GroupMember.id)).where(
+            GroupMember.group_id == group_id
+        )
+        return db.exec(statement).one()

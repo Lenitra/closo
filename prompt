@@ -1,4 +1,1 @@
-Pour la modale d'un post faire un carrousel si il y a plusieurs images
-
-Au hover sur une image dans le feed, afficher l'icone de l'utilisateur qui a posté l'image avec son nom d'utilisateur en hautà gauche de l'image
-Au hover en bas afficher le début des caractères de la description du post avec "..." si trop long
+Refait cette méthode, le Post n'a pas de UserId mais il a un groupMember qui lui à un userID

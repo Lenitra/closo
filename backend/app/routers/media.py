@@ -17,12 +17,11 @@ repo = MediaRepository()
 @router.get(
     "/",
     response_model=list[Media],
-    description="Route disponible pour les rôles: ['moderator', 'admin']",
+    description="Route disponible pour les rôles: ['any']",
 )
 def get_all_medias(
-    group_id: int,
     db: Session = Depends(get_db),
-    current_user_id=Depends(require_role(["moderator", "admin"])),
+    current_user_id=Depends(require_role(["any"])),
 ):
     return repo.list(db)
 

@@ -67,10 +67,10 @@ def update_groupmember(
 
 
 @router.delete(
-    "/{id}", status_code=204, description="Route disponible pour les rôles: ['admin']"
+    "/{id}", status_code=204, description="Route disponible pour les rôles: ['user']"
 )
 def delete_groupmember(
-    id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))
+    id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["user"]))
 ):
     ok = repo.delete(db, id)
     if not ok:

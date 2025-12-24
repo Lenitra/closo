@@ -295,6 +295,23 @@ function loadUserInfo() {
             currentUser = user;
             localStorage.setItem('user', JSON.stringify(user));
             updateProfileUI(user);
+
+            // Charger le nombre de posts
+            return fetch(`${API_BASE_URL}/users/me/posts/count`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        }
+    })
+    .then(response => {
+        if (response && response.ok) {
+            return response.json();
+        }
+        return { count: 0 };
+    })
+    .then(data => {
+        const postsCountEl = document.getElementById('postsCount');
+        if (postsCountEl) {
+            postsCountEl.textContent = data.count || 0;
         }
     })
     .catch(error => {

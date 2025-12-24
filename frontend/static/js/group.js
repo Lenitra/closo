@@ -66,6 +66,7 @@ function initGroupPage() {
 function loadGroupInfo() {
     const token = localStorage.getItem('access_token');
 
+    // Charger les infos du groupe
     fetch(`${API_BASE_URL}/groups/${currentGroupId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -78,6 +79,23 @@ function loadGroupInfo() {
     .then(group => {
         currentGroup = group;
         updateGroupHeader(group);
+
+        // Charger le nombre de membres
+        return fetch(`${API_BASE_URL}/groups/${currentGroupId}/members/count`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    })
+    .then(response => {
+        if (response && response.ok) {
+            return response.json();
+        }
+        return { count: 0 };
+    })
+    .then(data => {
+        const membersCountEl = document.getElementById('membersCount');
+        if (membersCountEl) {
+            membersCountEl.textContent = data.count || 0;
+        }
     })
     .catch(error => {
         console.error('Error loading group:', error);
