@@ -13,6 +13,7 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: str
     username: str = Field(default=None)
+    avatar_url: str | None = Field(default=None)
     role_id: int = Field(default=1, foreign_key="roles.id")
     is_active: bool = Field(default=True)
     created_at: datetime | None = Field(default=None)
@@ -45,6 +46,7 @@ class UserRead(SQLModel):
     id: int
     email: str
     username: str
+    avatar_url: Optional[str] = None
     role_id: int
     is_active: bool
     created_at: Optional[datetime] = None

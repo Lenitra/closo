@@ -1,0 +1,460 @@
+/* ==========================================================================
+   Closo Storage Admin Page
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Admin Banner
+   -------------------------------------------------------------------------- */
+.admin-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border-radius: var(--radius-lg);
+    color: white;
+    margin-bottom: var(--spacing-xl);
+}
+
+.admin-banner-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.admin-banner-icon svg {
+    width: 48px;
+    height: 48px;
+}
+
+.admin-banner-info h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.admin-banner-info p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Stats Section
+   -------------------------------------------------------------------------- */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-100);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: all var(--transition-fast);
+}
+
+.stat-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border-radius: var(--radius-md);
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--color-gray-500);
+}
+
+/* --------------------------------------------------------------------------
+   Files Section
+   -------------------------------------------------------------------------- */
+.files-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.btn-danger-outline {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: all var(--transition-fast);
+}
+
+.btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.file-thumbnail {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.file-thumbnail:hover {
+    border-color: var(--color-primary);
+}
+
+.file-thumbnail-image {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.file-thumbnail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-base);
+}
+
+.file-thumbnail:hover img {
+    transform: scale(1.05);
+}
+
+.file-thumbnail-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--spacing-sm);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.file-thumbnail-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-thumbnail-size {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.file-delete-btn {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    width: 32px;
+    height: 32px;
+    background: rgba(239, 68, 68, 0.9);
+    border-radius: var(--radius-md);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.file-thumbnail:hover .file-delete-btn {
+    opacity: 1;
+}
+
+.file-delete-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* --------------------------------------------------------------------------
+   Empty State
+   -------------------------------------------------------------------------- */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--spacing-4xl) var(--spacing-lg);
+    color: var(--color-gray-400);
+}
+
+.empty-state svg {
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    color: var(--color-gray-600);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   File Detail Modal
+   -------------------------------------------------------------------------- */
+.modal-media-detail {
+    max-width: 900px;
+    width: 95%;
+    max-height: 90vh;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.modal-close-outside {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: white;
+    border-radius: var(--radius-full);
+}
+
+.modal-close-outside:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.file-detail-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+
+.file-detail-image {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.file-detail-image img {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+.file-detail-content {
+    padding: var(--spacing-lg);
+    background: var(--color-white);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.file-detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-gray-100);
+}
+
+.file-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.file-info-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.file-size {
+    font-size: 0.85rem;
+    color: var(--color-gray-500);
+    font-weight: 500;
+    padding: 4px 8px;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.file-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.btn-icon-action {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-600);
+    border: 1px solid var(--color-gray-200);
+    background: var(--color-white);
+    transition: all var(--transition-fast);
+}
+
+.btn-icon-action:hover {
+    background: var(--color-gray-50);
+    border-color: var(--color-gray-300);
+    color: var(--color-gray-900);
+}
+
+.btn-icon-action.danger {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-icon-action.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.file-detail-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-md);
+}
+
+.info-item {
+    display: flex;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--color-gray-600);
+    min-width: 130px;
+}
+
+.info-value {
+    color: var(--color-gray-900);
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+}
+
+/* --------------------------------------------------------------------------
+   Header Actions
+   -------------------------------------------------------------------------- */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-600);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+}
+
+/* --------------------------------------------------------------------------
+   Desktop Styles
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+    .files-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .file-detail-container {
+        flex-direction: row;
+        max-height: 80vh;
+    }
+
+    .file-detail-image {
+        flex: 1;
+        max-height: none;
+        min-width: 0;
+    }
+
+    .file-detail-image img {
+        max-height: 80vh;
+    }
+
+    .file-detail-content {
+        width: 380px;
+        flex-shrink: 0;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .files-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}

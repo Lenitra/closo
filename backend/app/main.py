@@ -30,17 +30,17 @@ for module_info in pkgutil.iter_modules([str(entities_dir)]):
 
 # Create database tables (drop and recreate to ensure schema is up to date)
 # Use CASCADE to handle foreign key constraints
-with engine.connect() as conn:
-    for table in reversed(SQLModel.metadata.sorted_tables):
-        conn.execute(text(f'DROP TABLE IF EXISTS "{table.name}" CASCADE'))
-    conn.commit()
-SQLModel.metadata.create_all(engine)
+# with engine.connect() as conn:
+#     for table in reversed(SQLModel.metadata.sorted_tables):
+#         conn.execute(text(f'DROP TABLE IF EXISTS "{table.name}" CASCADE'))
+#     conn.commit()
+# SQLModel.metadata.create_all(engine)
 
-# Seed initial data
-with Session(engine) as session:
-    seed_roles(session)
-    seed_users(session)
-    seed_groups(session)
+# # # Seed initial data
+# with Session(engine) as session:
+#     seed_roles(session)
+#     seed_users(session)
+#     seed_groups(session)
 
 # Create FastAPI app
 app = FastAPI(

@@ -2,8 +2,6 @@
 // Closo Publish Page - Multi-image Upload
 // ==========================================================================
 
-const API_BASE_URL = 'http://localhost:8055';
-
 const GROUP_COLORS = [
     'linear-gradient(135deg, #f472b6, #c084fc)',
     'linear-gradient(135deg, #60a5fa, #34d399)',

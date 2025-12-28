@@ -1,10 +1,16 @@
-from fastapi import Body, APIRouter, HTTPException, Depends
-from sqlmodel import Session
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from sqlmodel import Session, select
+from pydantic import BaseModel
+import secrets
+import string
 from app.entities.group import Group, GroupRead
+from app.entities.groupmember import GroupMember
 from app.repositories.group_repository import GroupRepository
 from app.repositories.groupmember_repository import GroupMemberRepository
 from app.utils.core.database import get_db
-from app.utils.auth.roles import require_role
+from app.utils.auth.roles import require_role, get_current_user
+from app.entities.user import User
+from app.utils.slave_manager.orchestrator import save_media
 
 
 router = APIRouter(prefix="/groups", tags=["Group"])
@@ -40,18 +46,63 @@ def get_group_by_id(
     return group
 
 
+class CreateGroupRequest(BaseModel):
+    nom: str
+    description: str | None = None
+
+
 @router.post(
     "/",
-    response_model=Group,
+    response_model=GroupRead,
     status_code=201,
-    description="Route disponible pour les rôles: ['user']",
+    description="Créer un nouveau groupe et ajouter l'utilisateur comme créateur.",
 )
 def create_group(
-    payload: dict = Body(...),
+    data: CreateGroupRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["user"])),
+    current_user: User = Depends(get_current_user),
 ):
-    return repo.save(db, payload)
+    """
+    Crée un nouveau groupe et ajoute automatiquement l'utilisateur actuel
+    comme membre avec le rôle de créateur (role=3).
+    Génère également un code d'invitation unique.
+    """
+    # Generate a unique invite code
+    max_attempts = 10
+    invite_code = None
+    for _ in range(max_attempts):
+        code = generate_invite_code()
+        # Check if code already exists
+        existing = db.exec(select(Group).where(Group.invite_code == code)).first()
+        if not existing:
+            invite_code = code
+            break
+
+    if not invite_code:
+        raise HTTPException(status_code=500, detail="Failed to generate unique invite code")
+
+    # Create the group with invite code
+    group = Group(
+        nom=data.nom,
+        description=data.description,
+        invite_code=invite_code,
+        user_creator_id=current_user.id,
+    )
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+
+    # Add creator as group member with role=3 (creator)
+    group_member = GroupMember(
+        user_id=current_user.id,
+        group_id=group.id,
+        role=3,  # Creator role
+    )
+    db.add(group_member)
+    db.commit()
+    db.refresh(group)
+
+    return group
 
 
 @router.delete(
@@ -81,3 +132,213 @@ def get_group_members_count(
 ):
     count = member_repo.count_members_in_group(db, id)
     return {"count": count}
+
+
+def generate_invite_code(length: int = 8) -> str:
+    """Génère un code d'invitation aléatoire et unique."""
+    alphabet = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+@router.post(
+    "/{id}/regenerate-invite-code",
+    response_model=dict,
+    description="Régénère un nouveau code d'invitation pour le groupe (admin/créateur uniquement).",
+)
+def regenerate_group_invite_code(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Régénère un code d'invitation unique pour le groupe.
+    Seuls les admins et créateurs peuvent régénérer des codes.
+    L'ancien code devient invalide.
+    """
+    # Get the group
+    group = repo.get_by_id(db, id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Check if user is member of the group
+    statement = select(GroupMember).where(
+        GroupMember.group_id == id,
+        GroupMember.user_id == current_user.id
+    )
+    member = db.exec(statement).first()
+
+    if not member:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+    # Check if user has admin or creator role (role >= 2)
+    if member.role < 2:
+        raise HTTPException(status_code=403, detail="Only admins and creators can generate invite codes")
+
+    # Generate a unique invite code
+    max_attempts = 10
+    for _ in range(max_attempts):
+        code = generate_invite_code()
+        # Check if code already exists
+        existing = db.exec(select(Group).where(Group.invite_code == code)).first()
+        if not existing:
+            break
+    else:
+        raise HTTPException(status_code=500, detail="Failed to generate unique invite code")
+
+    # Update group with new invite code
+    group.invite_code = code
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+
+    return {"invite_code": code}
+
+
+class JoinGroupRequest(BaseModel):
+    invite_code: str
+
+
+@router.post(
+    "/join",
+    response_model=GroupRead,
+    description="Rejoindre un groupe avec un code d'invitation.",
+)
+def join_group_with_code(
+    data: JoinGroupRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Permet à un utilisateur de rejoindre un groupe en utilisant un code d'invitation.
+    """
+    # Find group by invite code
+    statement = select(Group).where(Group.invite_code == data.invite_code)
+    group = db.exec(statement).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+
+    # Check if user is already a member
+    existing_member = db.exec(
+        select(GroupMember).where(
+            GroupMember.group_id == group.id,
+            GroupMember.user_id == current_user.id
+        )
+    ).first()
+
+    if existing_member:
+        raise HTTPException(status_code=400, detail="You are already a member of this group")
+
+    # Add user as member with role=1 (regular member)
+    new_member = GroupMember(
+        user_id=current_user.id,
+        group_id=group.id,
+        role=1,  # Regular member
+    )
+    db.add(new_member)
+    db.commit()
+    db.refresh(group)
+
+    return group
+
+
+class UpdateGroupRequest(BaseModel):
+    nom: str | None = None
+    description: str | None = None
+
+
+@router.put(
+    "/{id}",
+    response_model=GroupRead,
+    description="Mettre à jour les informations d'un groupe (admin/créateur uniquement).",
+)
+def update_group(
+    id: int,
+    data: UpdateGroupRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Met à jour les informations d'un groupe.
+    Seuls les admins et créateurs peuvent modifier un groupe.
+    """
+    # Get the group
+    group = repo.get_by_id(db, id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Check if user is member of the group
+    statement = select(GroupMember).where(
+        GroupMember.group_id == id,
+        GroupMember.user_id == current_user.id
+    )
+    member = db.exec(statement).first()
+
+    if not member:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+    # Check if user has admin or creator role (role >= 2)
+    if member.role < 2:
+        raise HTTPException(status_code=403, detail="Only admins and creators can update group info")
+
+    # Update fields
+    if data.nom is not None:
+        group.nom = data.nom
+    if data.description is not None:
+        group.description = data.description
+
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+
+    return group
+
+
+@router.post(
+    "/{id}/upload-image",
+    response_model=GroupRead,
+    description="Upload image for a group (admin/creator only).",
+)
+async def upload_group_image(
+    id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upload image for group"""
+    # Get the group
+    group = repo.get_by_id(db, id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Check if user is member of the group
+    statement = select(GroupMember).where(
+        GroupMember.group_id == id,
+        GroupMember.user_id == current_user.id
+    )
+    member = db.exec(statement).first()
+
+    if not member:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+    # Check if user has admin or creator role (role >= 2)
+    if member.role < 2:
+        raise HTTPException(status_code=403, detail="Only admins and creators can upload group image")
+
+    # Verify file is an image
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    # Upload file to slave storage
+    try:
+        image_url = save_media(file.file)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+
+    # Update group image URL
+    group.image_url = image_url
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+
+    return group

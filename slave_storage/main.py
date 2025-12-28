@@ -127,6 +127,30 @@ async def get_file(file_id: str):
     return FileResponse(file_path, media_type=media_type)
 
 
+@app.get("/files", dependencies=[Depends(verify_api_key)])
+async def list_files():
+    """
+    Liste tous les fichiers stockés.
+    Requiert la clé API du backend Closo.
+    """
+    files = []
+    for file_path in STORAGE_DIR.iterdir():
+        if file_path.is_file():
+            # Extraire l'ID (nom sans extension)
+            file_id = file_path.stem
+            files.append({
+                "id": file_id,
+                "filename": file_path.name,
+                "size": file_path.stat().st_size,
+                "created_at": file_path.stat().st_ctime,
+            })
+
+    # Trier par date de création (plus récent en premier)
+    files.sort(key=lambda x: x["created_at"], reverse=True)
+
+    return {"files": files, "count": len(files)}
+
+
 @app.delete("/files/{file_id}", dependencies=[Depends(verify_api_key)])
 async def delete_file(file_id: str):
     """

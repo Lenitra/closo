@@ -75,3 +75,27 @@ def fetch_file_from_slave(file_id: str) -> httpx.Response:
     )
     response.raise_for_status()
     return response
+
+
+def list_all_files_from_slave() -> dict:
+    """List all files from the slave storage."""
+    slave_url = get_optimised_slave()
+    url = f"{slave_url}/files"
+    response = httpx.get(
+        url,
+        headers={"X-API-Key": settings.SECRET_KEY},
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def delete_file_from_slave(file_id: str) -> dict:
+    """Delete a file from the slave storage."""
+    slave_url = get_optimised_slave()
+    url = f"{slave_url}/files/{file_id}"
+    response = httpx.delete(
+        url,
+        headers={"X-API-Key": settings.SECRET_KEY},
+    )
+    response.raise_for_status()
+    return response.json()

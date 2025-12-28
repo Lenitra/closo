@@ -2,12 +2,11 @@
 // Closo App - JavaScript
 // ==========================================================================
 
-const API_BASE_URL = 'http://localhost:8055';
-
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     initUserMenu();
     initModal();
+    initJoinModal();
     loadUserInfo();
     loadGroups();
 });
@@ -95,11 +94,65 @@ function initModal() {
     });
 
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            // TODO: API call to create group
-            closeModal();
-            showNotification('Groupe cree avec succes !');
+
+            const groupName = document.getElementById('groupName').value.trim();
+            const groupDesc = document.getElementById('groupDesc').value.trim();
+
+            if (!groupName) {
+                showNotification('Le nom du groupe est requis');
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creation...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/groups/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nom: groupName,
+                        description: groupDesc || null
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur lors de la creation du groupe');
+                }
+
+                const newGroup = await response.json();
+
+                closeModal();
+                showNotification('Groupe cree avec succes !');
+
+                // Recharger la liste des groupes
+                loadGroups();
+
+                // Rediriger vers le nouveau groupe apres un court delai
+                setTimeout(() => {
+                    window.location.href = `group.html?id=${newGroup.id}`;
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error creating group:', error);
+                showNotification('Erreur lors de la creation du groupe');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Creer le groupe';
+            }
         });
     }
 }
@@ -224,10 +277,15 @@ function renderGroups(groups) {
         return;
     }
 
-    groupsList.innerHTML = groups.map(group => `
+    groupsList.innerHTML = groups.map(group => {
+        const avatarContent = group.image_url
+            ? `<img src="${API_BASE_URL}${group.image_url}" alt="${escapeHtml(group.nom)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+            : `<span>${group.nom.charAt(0).toUpperCase()}</span>`;
+
+        return `
         <a href="group.html?id=${group.id}" class="group-item">
             <div class="group-avatar" style="background: ${getGroupColor(group.id)};">
-                <span>${group.nom.charAt(0).toUpperCase()}</span>
+                ${avatarContent}
             </div>
             <div class="group-info">
                 <h3 class="group-name">${escapeHtml(group.nom)}</h3>
@@ -239,7 +297,8 @@ function renderGroups(groups) {
                 </svg>
             </div>
         </a>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function escapeHtml(text) {
@@ -304,4 +363,116 @@ function showNotification(message) {
         notification.style.animation = 'slideUp 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
+}
+
+// --------------------------------------------------------------------------
+// Join Group Modal
+// --------------------------------------------------------------------------
+function initJoinModal() {
+    const modal = document.getElementById('joinModal');
+    const joinBtn = document.getElementById('joinGroupBtn');
+    const closeBtn = document.getElementById('closeJoinModal');
+    const form = document.getElementById('joinGroupForm');
+    const inviteCodeInput = document.getElementById('inviteCode');
+
+    function openModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        if (form) form.reset();
+    }
+
+    if (joinBtn) {
+        joinBtn.addEventListener('click', openModal);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Auto-uppercase invite code
+    if (inviteCodeInput) {
+        inviteCodeInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const inviteCode = inviteCodeInput.value.trim().toUpperCase();
+
+            if (!inviteCode || inviteCode.length !== 8) {
+                showNotification('Le code doit contenir 8 caracteres');
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Rejoindre...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/groups/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        invite_code: inviteCode
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Code d\'invitation invalide');
+                }
+
+                const group = await response.json();
+
+                closeModal();
+                showNotification('Groupe rejoint avec succes !');
+
+                // Reload groups list
+                loadGroups();
+
+                // Redirect to the group after a short delay
+                setTimeout(() => {
+                    window.location.href = `group.html?id=${group.id}`;
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error joining group:', error);
+                showNotification(error.message || 'Erreur lors de la tentative de rejoindre le groupe');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Rejoindre';
+            }
+        });
+    }
 }

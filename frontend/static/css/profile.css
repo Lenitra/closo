@@ -3,6 +3,44 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
+   App Header (override if needed)
+   -------------------------------------------------------------------------- */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    flex: 1;
+}
+
+.header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    color: var(--color-gray-600);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.back-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+}
+
+/* --------------------------------------------------------------------------
    Profile Header
    -------------------------------------------------------------------------- */
 .profile-header {

@@ -11,6 +11,7 @@ class Group(SQLModel, table=True):
     nom: str = Field()
     description: Optional[str] = Field(default=None)
     image_url: Optional[str] = Field(default=None)
+    invite_code: Optional[str] = Field(default=None, unique=True, index=True)
     user_creator_id: int = Field(foreign_key="user.id")
 
     # Relations (unidirectionnelle)
@@ -36,4 +37,5 @@ class GroupRead(SQLModel):
     nom: str
     description: Optional[str] = None
     image_url: Optional[str] = None
+    invite_code: Optional[str] = None
     creator: Optional[UserBasic] = None

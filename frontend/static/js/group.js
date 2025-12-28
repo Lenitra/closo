@@ -2,8 +2,6 @@
 // Closo Group Page - Instagram Style
 // ==========================================================================
 
-const API_BASE_URL = 'http://localhost:8055';
-
 // Couleurs pour les avatars
 const GROUP_COLORS = [
     'linear-gradient(135deg, #f472b6, #c084fc)',
@@ -20,6 +18,7 @@ let currentGroup = null;
 let posts = [];
 let allMedias = [];
 let currentView = 'posts'; // 'posts' ou 'medias'
+let membersCount = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
@@ -54,6 +53,14 @@ function initGroupPage() {
     const createBtn = document.getElementById('createPostBtn');
     if (createBtn) {
         createBtn.href = `publish.html?group=${currentGroupId}`;
+    }
+
+    // Lien vers la page d'informations du groupe
+    const settingsBtn = document.getElementById('groupSettingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            window.location.href = `group_info.html?id=${currentGroupId}`;
+        });
     }
 
     loadGroupInfo();
@@ -92,9 +99,10 @@ function loadGroupInfo() {
         return { count: 0 };
     })
     .then(data => {
+        membersCount = data.count || 0;
         const membersCountEl = document.getElementById('membersCount');
         if (membersCountEl) {
-            membersCountEl.textContent = data.count || 0;
+            membersCountEl.textContent = membersCount;
         }
     })
     .catch(error => {
@@ -121,10 +129,17 @@ function updateGroupHeader(group) {
 
     if (groupAvatar) {
         groupAvatar.style.background = color;
+
+        // Display group image if exists
+        if (group.image_url) {
+            console.log('Group has image on group.html:', group.image_url);
+            groupAvatar.innerHTML = `<img src="${API_BASE_URL}${group.image_url}" alt="${escapeHtml(group.nom || 'Groupe')}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+            console.log('Group has no image on group.html');
+            groupAvatar.innerHTML = `<span id="groupInitial">${escapeHtml(group.nom ? group.nom.charAt(0).toUpperCase() : 'G')}</span>`;
+        }
     }
-    if (groupInitial) {
-        groupInitial.textContent = group.nom ? group.nom.charAt(0).toUpperCase() : 'G';
-    }
+
     if (groupName) {
         groupName.textContent = group.nom || 'Groupe';
     }
@@ -245,7 +260,7 @@ function renderPosts(postsData) {
     if (!postsGrid) return;
 
     posts = postsData;
-    updateStats(posts.length, 0);
+    updateStats(posts.length, membersCount);
 
     if (!posts || posts.length === 0) {
         postsGrid.innerHTML = `
@@ -293,6 +308,7 @@ function createPostThumbnail(post, index) {
     const initial = username.charAt(0).toUpperCase();
     const userId = user?.id || index;
     const avatarColor = GROUP_COLORS[userId % GROUP_COLORS.length];
+    const avatarUrl = user?.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
 
     // Caption tronquée
     const caption = post.post?.caption || '';
@@ -312,7 +328,7 @@ function createPostThumbnail(post, index) {
             <div class="post-thumbnail-overlay">
                 <div class="post-thumbnail-header">
                     <div class="post-thumbnail-avatar" style="background: ${avatarColor}">
-                        <span>${initial}</span>
+                        ${avatarUrl ? `<img src="${avatarUrl}" alt="${escapeHtml(username)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : `<span>${initial}</span>`}
                     </div>
                     <span class="post-thumbnail-username">${escapeHtml(username)}</span>
                 </div>
@@ -420,13 +436,20 @@ function renderMediaDetail() {
     const user = groupMember?.user;
     const username = user?.username || 'Utilisateur';
     const initial = username.charAt(0).toUpperCase();
+    const avatarUrl = user?.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
 
-    if (detailAvatarInitial) detailAvatarInitial.textContent = initial;
     if (detailAuthor) detailAuthor.textContent = username;
 
     if (detailAvatar && user) {
         const colorIndex = (user.id || 0) % GROUP_COLORS.length;
         detailAvatar.style.background = GROUP_COLORS[colorIndex];
+
+        // Display avatar image or initial
+        if (avatarUrl) {
+            detailAvatar.innerHTML = `<img src="${avatarUrl}" alt="${escapeHtml(username)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+            detailAvatar.innerHTML = `<span id="detailAvatarInitial">${initial}</span>`;
+        }
     }
 
     // Caption
@@ -538,15 +561,22 @@ function renderPostDetail() {
     const user = groupMember?.user;
     const username = user?.username || 'Utilisateur';
     const initial = username.charAt(0).toUpperCase();
+    const avatarUrl = user?.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
 
-    if (detailAvatarInitial) detailAvatarInitial.textContent = initial;
     if (detailAuthor) detailAuthor.textContent = username;
 
-    // Avatar couleur
+    // Avatar couleur et image
     if (detailAvatar) {
         const userId = user?.id || currentDetailPostIndex;
         const colorIndex = userId % GROUP_COLORS.length;
         detailAvatar.style.background = GROUP_COLORS[colorIndex];
+
+        // Display avatar image or initial
+        if (avatarUrl) {
+            detailAvatar.innerHTML = `<img src="${avatarUrl}" alt="${escapeHtml(username)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+            detailAvatar.innerHTML = `<span id="detailAvatarInitial">${initial}</span>`;
+        }
     }
 
     // Caption

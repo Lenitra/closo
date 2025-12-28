@@ -16,3 +16,14 @@ class UserRepository(BaseRepository[User]):
         """Get users by role name"""
         statement = select(User).where(User.roles.__contains__(role_name))
         return list(db.exec(statement).all())
+
+    def update_avatar(self, db: Session, user_id: int, avatar_url: str) -> User:
+        """Update user avatar URL"""
+        user = self.get(db, user_id)
+        if not user:
+            raise ValueError(f"User with id {user_id} not found")
+        user.avatar_url = avatar_url
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user

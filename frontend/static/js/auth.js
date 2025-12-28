@@ -2,8 +2,6 @@
  * Closo Auth Pages - JavaScript
  */
 
-const API_BASE_URL = 'http://localhost:8055';
-
 document.addEventListener('DOMContentLoaded', function() {
     // Toggle password visibility
     initPasswordToggles();

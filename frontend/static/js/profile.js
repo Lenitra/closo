@@ -2,8 +2,6 @@
 // Closo Profile Page - JavaScript
 // ==========================================================================
 
-const API_BASE_URL = 'http://localhost:8055';
-
 // Couleurs pour les avatars
 const GROUP_COLORS = [
     'linear-gradient(135deg, #f472b6, #c084fc)',
@@ -236,9 +234,15 @@ function initAvatarUpload() {
             avatarInput.click();
         });
 
-        avatarInput.addEventListener('change', (e) => {
+        avatarInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
+                // Verify file is an image
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Veuillez selectionner une image', 'error');
+                    return;
+                }
+
                 // Preview the image
                 const reader = new FileReader();
                 reader.onload = (event) => {
@@ -248,12 +252,35 @@ function initAvatarUpload() {
                     profileImage.src = event.target.result;
                     profileImage.style.display = 'block';
                     profileInitial.style.display = 'none';
-
-                    // TODO: Upload to server
-                    console.log('Uploading avatar:', file.name);
-                    showNotification('Photo de profil mise a jour !');
                 };
                 reader.readAsDataURL(file);
+
+                // Upload to server
+                const token = localStorage.getItem('access_token');
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/users/me/upload-avatar`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Upload failed');
+
+                    const updatedUser = await response.json();
+
+                    // Update localStorage with new user data
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                    showNotification('Photo de profil mise a jour !');
+                } catch (error) {
+                    console.error('Error uploading avatar:', error);
+                    showNotification('Erreur lors de la mise a jour', 'error');
+                }
             }
         });
     }
@@ -323,10 +350,23 @@ function updateProfileUI(user) {
     const initial = user.username ? user.username.charAt(0).toUpperCase() : '?';
 
     const profileInitial = document.getElementById('profileInitial');
+    const profileImage = document.getElementById('profileImage');
     const profileUsername = document.getElementById('profileUsername');
     const profileEmail = document.getElementById('profileEmail');
 
-    if (profileInitial) profileInitial.textContent = initial;
+    // Display avatar image if user has one
+    if (user.avatar_url && profileImage) {
+        profileImage.src = `${API_BASE_URL}${user.avatar_url}`;
+        profileImage.style.display = 'block';
+        if (profileInitial) profileInitial.style.display = 'none';
+    } else {
+        if (profileImage) profileImage.style.display = 'none';
+        if (profileInitial) {
+            profileInitial.textContent = initial;
+            profileInitial.style.display = 'flex';
+        }
+    }
+
     if (profileUsername) profileUsername.textContent = user.username || 'Utilisateur';
     if (profileEmail) profileEmail.textContent = user.email || '';
 

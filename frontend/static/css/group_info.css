@@ -1,0 +1,558 @@
+/* ==========================================================================
+   Closo Group Info Page
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   App Header (override if needed)
+   -------------------------------------------------------------------------- */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    flex: 1;
+}
+
+.header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    color: var(--color-gray-600);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.back-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+}
+
+/* --------------------------------------------------------------------------
+   Group Info Header
+   -------------------------------------------------------------------------- */
+.group-info-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl) 0;
+    border-bottom: 1px solid var(--color-gray-100);
+    text-align: center;
+}
+
+.group-avatar-container {
+    position: relative;
+}
+
+.group-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 3rem;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
+}
+
+.group-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.group-avatar-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    z-index: 1;
+}
+
+.avatar-edit-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-100);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-600);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    z-index: 2;
+}
+
+.avatar-edit-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.group-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.group-description {
+    font-size: 0.95rem;
+    color: var(--color-gray-600);
+    line-height: 1.5;
+    max-width: 500px;
+    margin: 0;
+}
+
+.group-description:empty {
+    display: none;
+}
+
+.btn-edit-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    margin-top: var(--spacing-sm);
+}
+
+.btn-edit-info:hover {
+    background: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Group Stats Section
+   -------------------------------------------------------------------------- */
+.group-stats-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) 0;
+    border-bottom: 1px solid var(--color-gray-100);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+}
+
+.stat-card svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--color-gray-500);
+}
+
+/* --------------------------------------------------------------------------
+   Members Section
+   -------------------------------------------------------------------------- */
+.members-section {
+    padding: var(--spacing-lg) 0;
+    border-bottom: 1px solid var(--color-gray-100);
+}
+
+.section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 var(--spacing-md);
+}
+
+.members-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.member-item:hover {
+    background: var(--color-gray-50);
+}
+
+.member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #f472b6, #c084fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0 0 2px;
+}
+
+.member-email {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-role {
+    padding: 4px 10px;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+    flex-shrink: 0;
+}
+
+.member-role.admin {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-primary);
+}
+
+.member-role.creator {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.member-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.member-action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--color-gray-500);
+    transition: all var(--transition-fast);
+}
+
+.member-action-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.member-action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.add-member-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background: var(--color-gray-50);
+    border: 2px dashed var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    color: var(--color-gray-600);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    margin-top: var(--spacing-sm);
+    width: 100%;
+}
+
+.add-member-btn:hover {
+    background: var(--color-gray-100);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Danger Zone
+   -------------------------------------------------------------------------- */
+.danger-zone {
+    padding: var(--spacing-lg) 0;
+}
+
+.btn-danger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: rgba(239, 68, 68, 0.05);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    width: 100%;
+    margin-top: var(--spacing-sm);
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+/* --------------------------------------------------------------------------
+   Modal Forms
+   -------------------------------------------------------------------------- */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.btn-secondary,
+.btn-primary {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.btn-secondary:hover {
+    background: var(--color-gray-200);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Empty State
+   -------------------------------------------------------------------------- */
+.empty-members {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-lg);
+    color: var(--color-gray-400);
+}
+
+.empty-members svg {
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.empty-members p {
+    font-size: 0.95rem;
+    color: var(--color-gray-500);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Desktop Styles
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+    .group-avatar-large {
+        width: 150px;
+        height: 150px;
+        font-size: 3.5rem;
+    }
+
+    .avatar-edit-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .group-stats-section {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+    }
+
+    .stat-card {
+        padding: var(--spacing-lg);
+    }
+}
+
+/* Invite Section */
+.invite-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.invite-description {
+    text-align: center;
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.9rem;
+}
+
+.invite-code-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.invite-code {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.3em;
+    color: var(--color-primary);
+    user-select: all;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--color-gray-50);
+    border-color: var(--color-gray-300);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+.modal-small {
+    max-width: 450px;
+}
+
+@media (min-width: 768px) {
+    .app-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
