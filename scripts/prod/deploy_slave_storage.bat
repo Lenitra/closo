@@ -40,8 +40,11 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM Execute remote Docker commands
 echo.
+echo Stopping and removing old container...
+ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker stop closo_storage 2>/dev/null; docker rm closo_storage 2>/dev/null; docker rmi closo_storage:latest 2>/dev/null; echo 'Old container removed'"
+
 echo Building and deploying container on remote server...
-ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker network inspect closo_network >/dev/null 2>&1 || docker network create closo_network && docker volume inspect closo_storage_data >/dev/null 2>&1 && echo 'Volume exists - preserving data' || docker volume create closo_storage_data && cd /opt/closo/slave_storage && docker build -t closo_storage:latest . && docker stop closo_storage 2>/dev/null || true && docker rm closo_storage 2>/dev/null || true && docker run -d --name closo_storage --network closo_network --env-file /opt/closo/slave_storage/.env -p 8060:8060 -v closo_storage_data:/app/storage --restart unless-stopped closo_storage:latest && echo '[OK] Container deployed successfully'"
+ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker network inspect closo_network >/dev/null 2>&1 || docker network create closo_network && docker volume inspect closo_storage_data >/dev/null 2>&1 && echo 'Volume exists - preserving data' || docker volume create closo_storage_data && cd /opt/closo/slave_storage && docker build -t closo_storage:latest . && docker run -d --name closo_storage --network closo_network --env-file /opt/closo/slave_storage/.env -p 8060:8060 -v closo_storage_data:/app/storage --restart unless-stopped closo_storage:latest && echo '[OK] Container deployed successfully'"
 
 if %ERRORLEVEL% EQU 0 (
     echo.

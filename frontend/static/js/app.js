@@ -279,7 +279,7 @@ function renderGroups(groups) {
 
     groupsList.innerHTML = groups.map(group => {
         const avatarContent = group.image_url
-            ? `<img src="${API_BASE_URL}${group.image_url}" alt="${escapeHtml(group.nom)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`
+            ? `<img src="${API_BASE_URL}${group.image_url}" alt="${escapeHtml(group.nom)}" style="width: 100%; height: 100%; object-fit: cover;">`
             : `<span>${group.nom.charAt(0).toUpperCase()}</span>`;
 
         return `

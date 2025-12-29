@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(ssh:*)",
+      "Bash(scriptsprodfix_nginx_config.bat)"
     ]
   }
 }

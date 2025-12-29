@@ -121,3 +121,38 @@ def delete_post(
     repo.delete(db, post_id)
 
     return {"message": "Post and associated media deleted successfully", "post_id": post_id}
+
+
+@router.patch(
+    "/{post_id}",
+    response_model=Post,
+    description="Modifie la légende d'un post.",
+)
+def update_post_caption(
+    post_id: int,
+    caption: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(require_role(["any"])),
+):
+    """
+    Modifie la légende d'un post.
+    Seul le créateur du post peut le modifier.
+    """
+    # Récupérer le post
+    post = repo.get_by_id(db, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # Vérifier que l'utilisateur est bien le créateur du post
+    group_member = groupmember_repo.get_by_id(db, post.group_member_id)
+    if not group_member or group_member.user_id != current_user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have permission to modify this post"
+        )
+
+    # Modifier la légende
+    post.caption = caption
+    updated_post = repo.save(db, post)
+
+    return updated_post

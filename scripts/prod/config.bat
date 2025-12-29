@@ -7,7 +7,7 @@ REM SSH Configuration
 set SSH_HOST=79.137.78.243
 set SSH_USER=debian
 set SSH_KEY=%USERPROFILE%\.ssh\closo_prod_key
-set SSH_OPTS=-o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10
+set SSH_OPTS=-o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -o LogLevel=ERROR -o BatchMode=yes -o ConnectTimeout=30
 
 REM Remote paths on server
 set REMOTE_BASE=/opt/closo

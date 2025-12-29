@@ -40,8 +40,11 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM Execute remote Docker commands
 echo.
+echo Stopping and removing old container...
+ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker stop closo_backend 2>/dev/null; docker rm closo_backend 2>/dev/null; docker rmi closo_backend:latest 2>/dev/null; echo 'Old container removed'"
+
 echo Building and deploying container on remote server...
-ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker network inspect closo_network >/dev/null 2>&1 || docker network create closo_network && cd /opt/closo/backend && docker build -t closo_backend:latest . && docker stop closo_backend 2>/dev/null || true && docker rm closo_backend 2>/dev/null || true && docker run -d --name closo_backend --network closo_network --env-file /opt/closo/backend/.env -p 8055:8000 --restart unless-stopped closo_backend:latest && echo '[OK] Container deployed successfully'"
+ssh -i "%SSH_KEY%" %SSH_OPTS% %SSH_USER%@%SSH_HOST% "docker network inspect closo_network >/dev/null 2>&1 || docker network create closo_network && cd /opt/closo/backend && docker build -t closo_backend:latest . && docker run -d --name closo_backend --network closo_network --env-file /opt/closo/backend/.env -p 8055:8000 --restart unless-stopped closo_backend:latest && echo '[OK] Container deployed successfully'"
 
 if %ERRORLEVEL% EQU 0 (
     echo.

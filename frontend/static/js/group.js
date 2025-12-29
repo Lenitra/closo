@@ -466,10 +466,30 @@ function renderMediaDetail() {
         detailTime.textContent = formatTimeAgo(media.post.created_at);
     }
 
+    // Afficher les boutons edit/delete si l'utilisateur est le créateur
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isOwner = user && currentUser.id === user.id;
+    const editBtn = document.getElementById('editPostBtn');
+    const deleteBtn = document.getElementById('deletePostBtn');
+
+    if (editBtn) {
+        editBtn.style.display = isOwner ? 'flex' : 'none';
+    }
+    if (deleteBtn) {
+        deleteBtn.style.display = isOwner ? 'flex' : 'none';
+    }
+
     // Navigation entre medias (pas de carrousel, navigation entre tous les medias)
-    prevBtn.hidden = currentMediaIndex === 0;
-    nextBtn.hidden = currentMediaIndex === allMedias.length - 1;
-    indicators.innerHTML = '';
+    // Si un seul média, masquer complètement les contrôles de navigation
+    if (allMedias.length <= 1) {
+        prevBtn.hidden = true;
+        nextBtn.hidden = true;
+        indicators.innerHTML = '';
+    } else {
+        prevBtn.hidden = currentMediaIndex === 0;
+        nextBtn.hidden = currentMediaIndex === allMedias.length - 1;
+        indicators.innerHTML = '';
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -481,6 +501,10 @@ function initDetailModal() {
     const prevBtn = document.getElementById('carouselPrev');
     const nextBtn = document.getElementById('carouselNext');
     const downloadBtn = document.getElementById('downloadBtn');
+    const editBtn = document.getElementById('editPostBtn');
+    const deleteBtn = document.getElementById('deletePostBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const saveEditBtn = document.getElementById('saveEditBtn');
 
     if (closeBtn) {
         closeBtn.addEventListener('click', closeDetailModal);
@@ -505,6 +529,26 @@ function initDetailModal() {
     // Téléchargement
     if (downloadBtn) {
         downloadBtn.addEventListener('click', downloadCurrentImage);
+    }
+
+    // Edit caption
+    if (editBtn) {
+        editBtn.addEventListener('click', startEditCaption);
+    }
+
+    // Delete post
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', deleteCurrentPost);
+    }
+
+    // Cancel edit
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', cancelEditCaption);
+    }
+
+    // Save edit
+    if (saveEditBtn) {
+        saveEditBtn.addEventListener('click', saveEditCaption);
     }
 
     document.addEventListener('keydown', function(e) {
@@ -549,6 +593,8 @@ function renderPostDetail() {
     const detailAuthor = document.getElementById('detailAuthor');
     const detailCaption = document.getElementById('detailCaption');
     const detailTime = document.getElementById('detailTime');
+    const editBtn = document.getElementById('editPostBtn');
+    const deleteBtn = document.getElementById('deletePostBtn');
 
     // Image actuelle
     const currentMedia = post.medias[currentDetailMediaIndex];
@@ -591,6 +637,17 @@ function renderPostDetail() {
     // Date
     if (detailTime && post.post?.created_at) {
         detailTime.textContent = formatTimeAgo(post.post.created_at);
+    }
+
+    // Afficher les boutons edit/delete si l'utilisateur est le créateur
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isOwner = user && currentUser.id === user.id;
+
+    if (editBtn) {
+        editBtn.style.display = isOwner ? 'flex' : 'none';
+    }
+    if (deleteBtn) {
+        deleteBtn.style.display = isOwner ? 'flex' : 'none';
     }
 
     // Mettre à jour le carrousel
@@ -807,4 +864,178 @@ function showNotification(message, type = 'success') {
         notification.style.animation = 'slideUp 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
+}
+
+// --------------------------------------------------------------------------
+// Edit and Delete Post Functions
+// --------------------------------------------------------------------------
+function startEditCaption() {
+    let currentPost;
+
+    // Get current post based on view mode
+    if (currentView === 'medias') {
+        const media = allMedias[currentMediaIndex];
+        if (!media || !media.post) return;
+        currentPost = media.post;
+    } else {
+        const post = posts[currentDetailPostIndex];
+        if (!post) return;
+        currentPost = post.post;
+    }
+
+    const detailCaption = document.getElementById('detailCaption');
+    const editCaptionContainer = document.getElementById('editCaptionContainer');
+    const editCaptionInput = document.getElementById('editCaptionInput');
+
+    // Hide caption display, show edit form
+    if (detailCaption) detailCaption.style.display = 'none';
+    if (editCaptionContainer) editCaptionContainer.style.display = 'flex';
+
+    // Set current caption in textarea
+    if (editCaptionInput) {
+        editCaptionInput.value = currentPost?.caption || '';
+        editCaptionInput.focus();
+    }
+}
+
+function cancelEditCaption() {
+    const detailCaption = document.getElementById('detailCaption');
+    const editCaptionContainer = document.getElementById('editCaptionContainer');
+
+    // Show caption display, hide edit form
+    if (detailCaption) detailCaption.style.display = 'block';
+    if (editCaptionContainer) editCaptionContainer.style.display = 'none';
+}
+
+async function saveEditCaption() {
+    let postId;
+    let currentPost;
+
+    // Get current post based on view mode
+    if (currentView === 'medias') {
+        const media = allMedias[currentMediaIndex];
+        if (!media || !media.post) return;
+        postId = media.post.id;
+        currentPost = media.post;
+    } else {
+        const post = posts[currentDetailPostIndex];
+        if (!post) return;
+        postId = post.id;
+        currentPost = post.post;
+    }
+
+    const editCaptionInput = document.getElementById('editCaptionInput');
+    const newCaption = editCaptionInput?.value || '';
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveEditBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Enregistrement...';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('caption', newCaption);
+
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la modification');
+        }
+
+        // Update local data
+        currentPost.caption = newCaption;
+
+        // Update UI
+        const captionP = document.querySelector('#detailCaption p');
+        if (captionP) {
+            captionP.textContent = newCaption;
+        }
+
+        cancelEditCaption();
+        showNotification('Légende modifiée avec succès');
+
+        // Reload posts to get fresh data
+        loadPosts();
+
+    } catch (error) {
+        console.error('Error updating caption:', error);
+        showNotification('Erreur lors de la modification', 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Enregistrer';
+        }
+    }
+}
+
+async function deleteCurrentPost() {
+    let postId;
+
+    // Get current post based on view mode
+    if (currentView === 'medias') {
+        const media = allMedias[currentMediaIndex];
+        if (!media || !media.post) return;
+        postId = media.post.id;
+    } else {
+        const post = posts[currentDetailPostIndex];
+        if (!post) return;
+        postId = post.id;
+    }
+
+    // Confirm deletion with custom modal
+    const confirmed = await showConfirm({
+        title: 'Supprimer le post',
+        message: 'Êtes-vous sûr de vouloir supprimer ce post et tous ses médias ? Cette action est irréversible.',
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler',
+        danger: true
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la suppression');
+        }
+
+        showNotification('Post supprimé avec succès');
+
+        // Close modal
+        closeDetailModal();
+
+        // Reload posts
+        loadPosts();
+
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        showNotification('Erreur lors de la suppression', 'error');
+    }
 }

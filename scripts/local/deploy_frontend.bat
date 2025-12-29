@@ -31,7 +31,7 @@ docker run -d ^
     --name %CONTAINER_NAME% ^
     --network %NETWORK_NAME% ^
     --env-file "%PROJECT_ROOT%\frontend\.env" ^
-    -p 8057:80 ^
+    -p 80:80 ^
     --restart unless-stopped ^
     %IMAGE_NAME%
 

@@ -178,8 +178,16 @@ function downloadFile(fileId, filename) {
 // --------------------------------------------------------------------------
 // Delete File
 // --------------------------------------------------------------------------
-function confirmDeleteFile(fileId) {
-    if (!confirm('Voulez-vous vraiment supprimer ce fichier ?\n\nATTENTION : Cette action supprimera également le post associé et tous ses médias. Cette action est irréversible.')) {
+async function confirmDeleteFile(fileId) {
+    const confirmed = await showConfirm({
+        title: 'Supprimer le fichier',
+        message: 'Voulez-vous vraiment supprimer ce fichier ? Cette action supprimera également le post associé et tous ses médias. Cette action est irréversible.',
+        confirmText: 'Supprimer',
+        cancelText: 'Annuler',
+        danger: true
+    });
+
+    if (!confirmed) {
         return;
     }
 
@@ -281,7 +289,11 @@ function formatDate(timestamp) {
 // --------------------------------------------------------------------------
 // Show Notification
 // --------------------------------------------------------------------------
-function showNotification(message, type = 'success') {
-    // Simple alert for now - you can implement a nicer notification system
-    alert(message);
+async function showNotification(message, type = 'success') {
+    await showAlert({
+        title: type === 'error' ? 'Erreur' : 'Succès',
+        message: message,
+        type: type,
+        buttonText: 'OK'
+    });
 }

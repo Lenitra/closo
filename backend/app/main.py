@@ -28,19 +28,56 @@ for module_info in pkgutil.iter_modules([str(entities_dir)]):
         print(f"❌ Warning: Could not import entity {name}: {e}")
 
 
-# Create database tables (drop and recreate to ensure schema is up to date)
-# Use CASCADE to handle foreign key constraints
-# with engine.connect() as conn:
-#     for table in reversed(SQLModel.metadata.sorted_tables):
-#         conn.execute(text(f'DROP TABLE IF EXISTS "{table.name}" CASCADE'))
-#     conn.commit()
-# SQLModel.metadata.create_all(engine)
+# Initialize database on startup
+def init_database():
+    """Initialize database tables and seed data if database is empty."""
+    try:
+        # Create all tables if they don't exist
+        SQLModel.metadata.create_all(engine)
+        print("✅ Database tables created successfully")
 
-# # # Seed initial data
-# with Session(engine) as session:
-#     seed_roles(session)
-#     seed_users(session)
-#     seed_groups(session)
+        # Check if database needs seeding (check if role table is empty)
+        with Session(engine) as session:
+            try:
+                result = session.exec(text("SELECT COUNT(*) FROM role")).first()
+                if result[0] == 0:
+                    print("📊 Database is empty, seeding initial data...")
+                    seed_roles(session)
+                    seed_users(session)
+                    seed_groups(session)
+                    print("✅ Database seeded successfully")
+                else:
+                    print("✅ Database already contains data, skipping seed")
+            except Exception:
+                # Rollback the failed transaction
+                session.rollback()
+                # Table doesn't exist or is empty, seed the data in a new session
+                print("📊 Database tables created, seeding initial data...")
+
+        # Use a fresh session for seeding if previous one failed
+        with Session(engine) as session:
+            try:
+                # Check again if we need to seed
+                result = session.exec(text("SELECT COUNT(*) FROM role")).first()
+                if result[0] == 0:
+                    seed_roles(session)
+                    seed_users(session)
+                    seed_groups(session)
+                    print("✅ Database seeded successfully")
+            except Exception:
+                # First time seeding
+                session.rollback()
+                with Session(engine) as fresh_session:
+                    seed_roles(fresh_session)
+                    seed_users(fresh_session)
+                    seed_groups(fresh_session)
+                    print("✅ Database seeded successfully")
+    except Exception as e:
+        print(f"⚠️  Database initialization error: {e}")
+        print("Attempting to continue anyway...")
+
+# Initialize database
+init_database()
 
 # Create FastAPI app
 app = FastAPI(

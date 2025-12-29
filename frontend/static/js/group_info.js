@@ -269,8 +269,16 @@ function createMemberItem(member) {
     `;
 }
 
-function removeMember(memberId) {
-    if (!confirm('Voulez-vous vraiment retirer ce membre du groupe ?')) return;
+async function removeMember(memberId) {
+    const confirmed = await showConfirm({
+        title: 'Retirer le membre',
+        message: 'Voulez-vous vraiment retirer ce membre du groupe ?',
+        confirmText: 'Retirer',
+        cancelText: 'Annuler',
+        danger: true
+    });
+
+    if (!confirmed) return;
 
     const token = localStorage.getItem('access_token');
 
@@ -393,16 +401,32 @@ function initModals() {
     const deleteGroupBtn = document.getElementById('deleteGroupBtn');
 
     if (leaveGroupBtn) {
-        leaveGroupBtn.addEventListener('click', () => {
-            if (!confirm('Voulez-vous vraiment quitter ce groupe ?')) return;
+        leaveGroupBtn.addEventListener('click', async () => {
+            const confirmed = await showConfirm({
+                title: 'Quitter le groupe',
+                message: 'Voulez-vous vraiment quitter ce groupe ?',
+                confirmText: 'Quitter',
+                cancelText: 'Annuler',
+                danger: true
+            });
+
+            if (!confirmed) return;
             // TODO: Implement leave group functionality
             showNotification('Fonctionnalite a venir');
         });
     }
 
     if (deleteGroupBtn) {
-        deleteGroupBtn.addEventListener('click', () => {
-            if (!confirm('ATTENTION : Voulez-vous vraiment supprimer definitivement ce groupe ?')) return;
+        deleteGroupBtn.addEventListener('click', async () => {
+            const confirmed = await showConfirm({
+                title: 'Supprimer le groupe',
+                message: 'ATTENTION : Voulez-vous vraiment supprimer définitivement ce groupe ?',
+                confirmText: 'Supprimer',
+                cancelText: 'Annuler',
+                danger: true
+            });
+
+            if (!confirmed) return;
             // TODO: Implement delete group functionality
             showNotification('Fonctionnalite a venir');
         });
@@ -611,7 +635,15 @@ function initInviteCode() {
 
     if (regenerateBtn) {
         regenerateBtn.addEventListener('click', async () => {
-            if (!confirm('Voulez-vous vraiment regenerer le code ? L\'ancien code ne fonctionnera plus.')) {
+            const confirmed = await showConfirm({
+                title: 'Régénérer le code',
+                message: 'Voulez-vous vraiment régénérer le code ? L\'ancien code ne fonctionnera plus.',
+                confirmText: 'Régénérer',
+                cancelText: 'Annuler',
+                danger: true
+            });
+
+            if (!confirmed) {
                 return;
             }
 
