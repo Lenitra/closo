@@ -273,6 +273,28 @@
     font-weight: 500;
     color: var(--color-gray-700);
     flex-shrink: 0;
+    border: none;
+    font-family: inherit;
+}
+
+.member-role.clickable {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.member-role.clickable:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.member-role.clickable:hover:not(.admin) {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--color-primary);
+}
+
+.member-role.clickable.admin:hover {
+    background: var(--color-gray-200);
+    color: var(--color-gray-800);
 }
 
 .member-role.admin {
@@ -560,4 +582,59 @@
         max-width: 600px;
         margin: 0 auto;
     }
+}
+
+/* --------------------------------------------------------------------------
+   Role Change Modal
+   -------------------------------------------------------------------------- */
+.change-role-description {
+    text-align: center;
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.95rem;
+}
+
+.change-role-description strong {
+    color: var(--color-gray-900);
+}
+
+.role-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.role-option-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-gray-50);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+}
+
+.role-option-btn:hover {
+    background: var(--color-gray-100);
+    border-color: var(--color-gray-300);
+}
+
+.role-option-btn.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.role-option-btn.active svg {
+    color: var(--color-primary);
+}
+
+.role-option-btn svg {
+    color: var(--color-gray-500);
+    flex-shrink: 0;
 }

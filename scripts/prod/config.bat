@@ -32,3 +32,7 @@ set IMAGE_DB=postgres:15-alpine
 set IMAGE_BACKEND=closo_backend:latest
 set IMAGE_FRONTEND=closo_frontend:latest
 set IMAGE_STORAGE=closo_storage:latest
+
+REM SSL Configuration
+set SSL_DOMAIN=clo-so.com
+set SSL_EMAIL=lenitramc@gmail.com

@@ -16,6 +16,8 @@ let currentGroupId = null;
 let currentGroup = null;
 let currentUser = null;
 let members = [];
+let currentUserRole = 0;
+let selectedMemberForRoleChange = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
@@ -23,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initModals();
     initAvatarUpload();
     initInviteCode();
+    initRoleChangeModal();
 });
 
 // --------------------------------------------------------------------------
@@ -245,6 +248,13 @@ function createMemberItem(member) {
 
     const isCurrentUser = currentUser && user.id === currentUser.id;
     const canManage = currentUser && (member.role !== 3) && !isCurrentUser;
+    // Only creator (role 3) can change roles
+    const canChangeRole = currentUserRole === 3 && member.role !== 3 && !isCurrentUser;
+
+    // Role tag: clickable if creator can change role
+    const roleTag = canChangeRole
+        ? `<button class="member-role clickable ${roleClass}" onclick="toggleMemberRole(${member.id}, '${escapeHtml(user.username || 'Utilisateur')}', ${member.role})" title="Cliquez pour modifier le role">${roleLabel}</button>`
+        : `<span class="member-role ${roleClass}">${roleLabel}</span>`;
 
     return `
         <div class="member-item">
@@ -255,7 +265,7 @@ function createMemberItem(member) {
                 <p class="member-name">${escapeHtml(user.username || 'Utilisateur')}${isCurrentUser ? ' (Vous)' : ''}</p>
                 <p class="member-email">${escapeHtml(user.email || '')}</p>
             </div>
-            <span class="member-role ${roleClass}">${roleLabel}</span>
+            ${roleTag}
             ${canManage ? `
                 <div class="member-actions">
                     <button class="member-action-btn danger" onclick="removeMember(${member.id})" title="Retirer">
@@ -308,6 +318,7 @@ function updateUIPermissions(membersData) {
     const currentMember = membersData.find(m => m.user && m.user.id === currentUser.id);
     if (!currentMember) return;
 
+    currentUserRole = currentMember.role;
     const isAdmin = currentMember.role >= 2; // role 2 = admin, role 3 = creator
 
     // Show/hide edit buttons based on permissions
@@ -683,5 +694,177 @@ function initInviteCode() {
                 `;
             }
         });
+    }
+}
+
+// --------------------------------------------------------------------------
+// Role Change Modal
+// --------------------------------------------------------------------------
+function initRoleChangeModal() {
+    const changeRoleModal = document.getElementById('changeRoleModal');
+    const closeChangeRoleModalBtn = document.getElementById('closeChangeRoleModal');
+    const setMemberRoleBtn = document.getElementById('setMemberRoleBtn');
+    const setAdminRoleBtn = document.getElementById('setAdminRoleBtn');
+
+    function closeChangeRoleModal() {
+        changeRoleModal.classList.remove('active');
+        document.body.style.overflow = '';
+        selectedMemberForRoleChange = null;
+    }
+
+    if (closeChangeRoleModalBtn) {
+        closeChangeRoleModalBtn.addEventListener('click', closeChangeRoleModal);
+    }
+
+    if (changeRoleModal) {
+        changeRoleModal.addEventListener('click', (e) => {
+            if (e.target === changeRoleModal) {
+                closeChangeRoleModal();
+            }
+        });
+    }
+
+    if (setMemberRoleBtn) {
+        setMemberRoleBtn.addEventListener('click', () => {
+            changeMemberRole(1);
+        });
+    }
+
+    if (setAdminRoleBtn) {
+        setAdminRoleBtn.addEventListener('click', () => {
+            changeMemberRole(2);
+        });
+    }
+
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && changeRoleModal.classList.contains('active')) {
+            closeChangeRoleModal();
+        }
+    });
+}
+
+function openChangeRoleModal(memberId, memberName, currentRole) {
+    selectedMemberForRoleChange = { memberId, memberName, currentRole };
+
+    const changeRoleModal = document.getElementById('changeRoleModal');
+    const memberNameEl = document.getElementById('changeRoleMemberName');
+    const setMemberRoleBtn = document.getElementById('setMemberRoleBtn');
+    const setAdminRoleBtn = document.getElementById('setAdminRoleBtn');
+
+    if (memberNameEl) {
+        memberNameEl.textContent = memberName;
+    }
+
+    // Highlight current role
+    if (setMemberRoleBtn) {
+        setMemberRoleBtn.classList.toggle('active', currentRole === 1);
+    }
+    if (setAdminRoleBtn) {
+        setAdminRoleBtn.classList.toggle('active', currentRole === 2);
+    }
+
+    changeRoleModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+async function changeMemberRole(newRole) {
+    if (!selectedMemberForRoleChange) return;
+
+    const { memberId, memberName, currentRole } = selectedMemberForRoleChange;
+
+    if (newRole === currentRole) {
+        // Close modal if same role selected
+        const changeRoleModal = document.getElementById('changeRoleModal');
+        changeRoleModal.classList.remove('active');
+        document.body.style.overflow = '';
+        selectedMemberForRoleChange = null;
+        return;
+    }
+
+    const roleLabel = newRole === 2 ? 'administrateur' : 'membre';
+    const actionLabel = newRole === 2 ? 'Promouvoir' : 'Retrograder';
+
+    const confirmed = await showConfirm({
+        title: `${actionLabel} ${memberName}`,
+        message: `Voulez-vous vraiment ${newRole === 2 ? 'promouvoir' : 'retrograder'} ${memberName} en ${roleLabel} ?`,
+        confirmText: actionLabel,
+        cancelText: 'Annuler',
+        danger: newRole === 1
+    });
+
+    if (!confirmed) return;
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/groupmembers/${memberId}/role`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role: newRole })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Erreur lors du changement de role');
+        }
+
+        showNotification(`${memberName} est maintenant ${roleLabel}`);
+
+        // Close modal and reload members
+        const changeRoleModal = document.getElementById('changeRoleModal');
+        changeRoleModal.classList.remove('active');
+        document.body.style.overflow = '';
+        selectedMemberForRoleChange = null;
+
+        loadMembers();
+    } catch (error) {
+        console.error('Error changing role:', error);
+        showNotification('Erreur: ' + error.message, 'error');
+    }
+}
+
+// Toggle role directly by clicking on the role tag
+async function toggleMemberRole(memberId, memberName, currentRole) {
+    // Toggle between member (1) and admin (2)
+    const newRole = currentRole === 1 ? 2 : 1;
+    const newRoleLabel = newRole === 2 ? 'administrateur' : 'membre';
+    const actionLabel = newRole === 2 ? 'Promouvoir' : 'Retrograder';
+
+    const confirmed = await showConfirm({
+        title: `${actionLabel} ${memberName}`,
+        message: `Voulez-vous vraiment ${newRole === 2 ? 'promouvoir' : 'retrograder'} ${memberName} en ${newRoleLabel} ?`,
+        confirmText: actionLabel,
+        cancelText: 'Annuler',
+        danger: newRole === 1
+    });
+
+    if (!confirmed) return;
+
+    const token = localStorage.getItem('access_token');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/groupmembers/${memberId}/role`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role: newRole })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Erreur lors du changement de role');
+        }
+
+        showNotification(`${memberName} est maintenant ${newRoleLabel}`);
+        loadMembers();
+    } catch (error) {
+        console.error('Error toggling role:', error);
+        showNotification('Erreur: ' + error.message, 'error');
     }
 }

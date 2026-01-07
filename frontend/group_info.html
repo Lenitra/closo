@@ -188,6 +188,38 @@
         </div>
     </div>
 
+    <!-- Change Role Modal -->
+    <div class="modal-overlay" id="changeRoleModal">
+        <div class="modal modal-small">
+            <div class="modal-header">
+                <h2 class="modal-title">Modifier le role</h2>
+                <button class="modal-close" id="closeChangeRoleModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="change-role-description">Changer le role de <strong id="changeRoleMemberName">ce membre</strong></p>
+                <div class="role-options">
+                    <button class="role-option-btn" id="setMemberRoleBtn" data-role="1">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Membre</span>
+                    </button>
+                    <button class="role-option-btn" id="setAdminRoleBtn" data-role="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Administrateur</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Member Modal -->
     <div class="modal-overlay" id="addMemberModal">
         <div class="modal">
@@ -220,6 +252,7 @@
     </div>
 
     <script src="static/js/config.js"></script>
+    <script src="static/js/auth-guard.js"></script>
     <script src="static/js/modals.js"></script>
     <script src="static/js/group_info.js"></script>
 </body>

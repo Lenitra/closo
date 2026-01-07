@@ -167,7 +167,10 @@ async function handleLoginSubmit(e) {
                 localStorage.setItem('user', JSON.stringify(user));
             }
 
-            window.location.href = 'app.html';
+            // Redirect to return URL or app.html
+            const returnUrl = localStorage.getItem('returnUrl');
+            localStorage.removeItem('returnUrl');
+            window.location.href = returnUrl || 'app.html';
         } else {
             showFormError(form, data.detail || 'Email ou mot de passe incorrect');
         }
