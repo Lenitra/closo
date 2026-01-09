@@ -219,3 +219,12 @@ nginx/logs/
 
 # Temporary nginx configs
 nginx/*.tmp
+
+# Additional environment files protection
+.env.*
+**/.env
+**/.env.*
+.env_backup/
+
+# But allow .env.example templates
+!**/.env.example
