@@ -1,0 +1,516 @@
+/* ==========================================================================
+   Closo - Auth Pages (Login & Register)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Auth Layout
+   -------------------------------------------------------------------------- */
+.auth-body {
+    min-height: 100vh;
+    background: var(--color-gray-50);
+}
+
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Auth Branding (Left Panel)
+   -------------------------------------------------------------------------- */
+.auth-branding {
+    display: none;
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #312e81 100%);
+    color: var(--color-white);
+    padding: var(--spacing-3xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-branding::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.auth-branding::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -30%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.auth-branding-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    max-width: 420px;
+}
+
+.auth-branding .logo {
+    color: var(--color-white);
+    margin-bottom: var(--spacing-3xl);
+}
+
+.auth-branding-text h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-white);
+}
+
+.auth-branding-text p {
+    font-size: var(--font-size-lg);
+    color: var(--color-gray-300);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.auth-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.auth-feature {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-base);
+    color: var(--color-gray-200);
+}
+
+.auth-feature svg {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Auth Form Container (Right Panel)
+   -------------------------------------------------------------------------- */
+.auth-form-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    background: var(--color-white);
+}
+
+.auth-form-wrapper {
+    width: 100%;
+    max-width: 380px;
+}
+
+/* --------------------------------------------------------------------------
+   Form Header
+   -------------------------------------------------------------------------- */
+.auth-form-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.auth-form-header .logo-mobile {
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.auth-form-header h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-xs);
+}
+
+.auth-form-header p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+}
+
+/* --------------------------------------------------------------------------
+   Form Elements
+   -------------------------------------------------------------------------- */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-field label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-gray-700);
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forgot-link {
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+}
+
+.forgot-link:hover {
+    color: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Input Fields
+   -------------------------------------------------------------------------- */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper svg {
+    position: absolute;
+    left: 14px;
+    color: var(--color-gray-400);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+    width: 18px;
+    height: 18px;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 14px 12px 44px;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family);
+    color: var(--color-gray-900);
+    background: var(--color-white);
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--color-gray-400);
+}
+
+.input-wrapper input:hover {
+    border-color: var(--color-gray-300);
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.input-wrapper:focus-within svg:first-of-type {
+    color: var(--color-primary);
+}
+
+/* Toggle Password */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    padding: 4px;
+    color: var(--color-gray-400);
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: var(--color-gray-600);
+}
+
+.toggle-password svg {
+    position: static;
+    pointer-events: auto;
+}
+
+.input-wrapper:has(.toggle-password) input {
+    padding-right: 44px;
+}
+
+/* Field Hints */
+.field-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+}
+
+/* --------------------------------------------------------------------------
+   Password Strength
+   -------------------------------------------------------------------------- */
+.password-strength {
+    height: 3px;
+    background: var(--color-gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.strength-bar {
+    height: 100%;
+    width: 0;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+}
+
+.strength-bar.weak {
+    width: 33%;
+    background: var(--color-error);
+}
+
+.strength-bar.medium {
+    width: 66%;
+    background: var(--color-warning);
+}
+
+.strength-bar.strong {
+    width: 100%;
+    background: var(--color-success);
+}
+
+/* --------------------------------------------------------------------------
+   Checkbox
+   -------------------------------------------------------------------------- */
+.checkbox-field {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: var(--spacing-xs);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.5;
+}
+
+.checkbox-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    background: var(--color-white);
+    border: 1.5px solid var(--color-gray-300);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    margin-top: 2px;
+}
+
+.checkbox-label:hover .checkmark {
+    border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked ~ .checkmark {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked ~ .checkmark::after {
+    content: '';
+    width: 4px;
+    height: 8px;
+    border: solid var(--color-white);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+
+.checkbox-label .link {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.checkbox-label .link:hover {
+    text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Auth Switch Link
+   -------------------------------------------------------------------------- */
+.auth-switch {
+    text-align: center;
+    margin-top: var(--spacing-xl);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.auth-switch a {
+    color: var(--color-primary);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.auth-switch a:hover {
+    color: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Form States
+   -------------------------------------------------------------------------- */
+.form-field.error .input-wrapper input {
+    border-color: var(--color-error);
+}
+
+.form-field.error .input-wrapper svg:first-of-type {
+    color: var(--color-error);
+}
+
+.error-message {
+    font-size: var(--font-size-xs);
+    color: var(--color-error);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.form-field.success .input-wrapper input {
+    border-color: var(--color-success);
+}
+
+.form-field.success .input-wrapper svg:first-of-type {
+    color: var(--color-success);
+}
+
+/* Loading State */
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: var(--spacing-sm);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive - Tablet
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+    .auth-form-container {
+        padding: var(--spacing-2xl);
+    }
+
+    .auth-form-wrapper {
+        max-width: 420px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive - Desktop
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+    .auth-branding {
+        display: flex;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 45%;
+        max-width: 560px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .auth-branding-content {
+        height: auto;
+    }
+
+    .auth-form-header .logo-mobile {
+        display: none;
+    }
+
+    .auth-form-container {
+        padding: var(--spacing-3xl);
+        margin-left: min(45%, 560px);
+        width: calc(100% - min(45%, 560px));
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive - Large Desktop
+   -------------------------------------------------------------------------- */
+@media (min-width: 1280px) {
+    .auth-branding {
+        width: 50%;
+        max-width: 640px;
+        padding: var(--spacing-4xl);
+    }
+
+    .auth-form-container {
+        margin-left: min(50%, 640px);
+        width: calc(100% - min(50%, 640px));
+    }
+
+    .auth-branding-text h1 {
+        font-size: var(--font-size-5xl);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Auth Error Message
+   -------------------------------------------------------------------------- */
+.auth-error {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-lg);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.auth-error svg {
+    flex-shrink: 0;
+}

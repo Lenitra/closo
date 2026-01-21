@@ -1,0 +1,11 @@
+Ajouter un bouton pour afficher la modale des membres d'un groupe (supprimer de la modale des paramètres). Si on est  créateur du groupe, on doit pouvoir ajouter et supprimer des admin. Si on est créateur ou admin du groupe, on doit pouvoir supprimer des gens du groupe. Si on est simple membre, on doit juste pouvoir voir la liste des membres.
+
+Pour les boutons : membres et paramètres, les disimuler dans un menu déroulant (icône 3 points horizontaux) tout à droite des boutons "Inviter" et "Ajouter des photos". De plus ajouter un bouton quitter le groupe dans ce menu déroulant.
+
+Supprimer le fait de pouvoir poster des vidéos.
+
+Supprimer la redirection vers la page d'accueil lorsqu'on clique sur le logo.
+
+Créer un système de sauvegarde automatique de la BDD et des fichiers toutes les nuits à 2h du matin. 
++ Créer un script pour à partir du ssh récupérer la dernière sauvegarde sur mon pc local.
+

@@ -159,7 +159,7 @@ scripts\prod\deploy_ssl.bat
 | closo_frontend | Custom | 80 | ❌ Via nginx |
 | closo_backend | Custom | 8000 | ❌ Via nginx |
 | closo_storage | Custom | 8060 | ❌ Via nginx |
-| closo_db | postgres:15-alpine | 5432 | ❌ Interne |
+| closo_db | postgres:15-alpine | 5432 | ❌ Interne par backend |
 | closo_certbot | certbot/certbot | - | ❌ Maintenance |
 
 ## Stack technique

@@ -57,7 +57,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
         updated_at=datetime.now(timezone.utc),
     )
 
-    created_user = user_repo.create(db, user)
+    created_user = user_repo.save(db, user)
     access_token = create_access_token(
         user_id=created_user.id, role_id=created_user.role_id
     )
