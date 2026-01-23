@@ -96,6 +96,93 @@
 }
 
 /* --------------------------------------------------------------------------
+   Dropdown Menu
+   -------------------------------------------------------------------------- */
+.dropdown-container {
+    position: relative;
+}
+
+.btn-icon {
+    padding: var(--spacing-sm);
+    min-width: auto;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + var(--spacing-xs));
+    right: 0;
+    min-width: 200px;
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-dropdown, 100);
+    padding: var(--spacing-xs);
+    animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-gray-700);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: var(--color-gray-50);
+    color: var(--color-gray-900);
+}
+
+.dropdown-item svg {
+    flex-shrink: 0;
+    color: var(--color-gray-500);
+}
+
+.dropdown-item:hover svg {
+    color: var(--color-gray-700);
+}
+
+.dropdown-item-danger {
+    color: var(--color-error, #ef4444);
+}
+
+.dropdown-item-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-error, #ef4444);
+}
+
+.dropdown-item-danger svg {
+    color: var(--color-error, #ef4444);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--color-gray-200);
+    margin: var(--spacing-xs) 0;
+}
+
+/* --------------------------------------------------------------------------
    Group Main Content
    -------------------------------------------------------------------------- */
 .group-main {
@@ -726,6 +813,110 @@
 }
 
 /* --------------------------------------------------------------------------
+   Members Modal
+   -------------------------------------------------------------------------- */
+.modal-members {
+    max-width: 500px;
+    width: 100%;
+}
+
+.members-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.member-modal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-gray-100);
+}
+
+.member-modal-item .member-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    flex: 1;
+}
+
+.member-modal-item .member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-white);
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    flex-shrink: 0;
+}
+
+.member-modal-item .member-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.member-modal-item .member-name {
+    font-weight: 500;
+    font-size: var(--font-size-base);
+    color: var(--color-gray-900);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.member-you {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    font-weight: 400;
+}
+
+.member-modal-item .member-role {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.member-role.creator {
+    color: var(--color-warning, #f59e0b);
+}
+
+.member-role.admin {
+    color: var(--color-primary);
+}
+
+.member-role.member {
+    color: var(--color-gray-500);
+}
+
+.member-modal-item .member-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.btn-danger {
+    background: var(--color-error, #ef4444);
+    color: var(--color-white);
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+/* --------------------------------------------------------------------------
    Responsive - Tablet (min-width: 640px)
    -------------------------------------------------------------------------- */
 @media (min-width: 640px) {
@@ -769,4 +960,40 @@
     .post-media-grid:not(.single):not(.double) {
         grid-template-columns: repeat(3, 1fr);
     }
+}
+
+/* --------------------------------------------------------------------------
+   Upload Progress Bar
+   -------------------------------------------------------------------------- */
+.upload-progress-container {
+    padding: 0 var(--spacing-xl) var(--spacing-md);
+}
+
+.upload-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.upload-progress-percent {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.upload-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--color-gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
 }

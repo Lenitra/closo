@@ -9,3 +9,12 @@ Supprimer la redirection vers la page d'accueil lorsqu'on clique sur le logo.
 Créer un système de sauvegarde automatique de la BDD et des fichiers toutes les nuits à 2h du matin. 
 + Créer un script pour à partir du ssh récupérer la dernière sauvegarde sur mon pc local.
 
+Profil utilisateur :
+- Profile picture
+- Username
+- Mot de passe
+- Voir ses posts dans ses différents groupes
+
+
+
+Sur le slider entre les images, faire en sorte qu'on puisse voir toutes les images du groupe, pas seulement du post

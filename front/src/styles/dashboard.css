@@ -563,6 +563,10 @@
 
 .user-menu-item:hover {
     background: var(--color-gray-50);
+    color: var(--color-gray-900);
+}
+
+.user-menu-item-danger:hover {
     color: var(--color-error);
 }
 

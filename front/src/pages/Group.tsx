@@ -28,6 +28,7 @@ function GroupPage() {
   const [caption, setCaption] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   // Settings modal state
   const [editName, setEditName] = useState('')
@@ -40,6 +41,13 @@ function GroupPage() {
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  // Members modal state
+  const [showMembersModal, setShowMembersModal] = useState(false)
+  const [membersError, setMembersError] = useState<string | null>(null)
+
+  // Dropdown menu state
+  const [showDropdown, setShowDropdown] = useState(false)
 
   // Vérifier si l'utilisateur est admin ou créateur (role >= 2)
   const canManageGroup = currentMember && currentMember.role >= 2
@@ -101,12 +109,19 @@ function GroupPage() {
 
     setUploadError(null)
     setIsSubmitting(true)
+    setUploadProgress(0)
 
     try {
-      await api.createPost(parseInt(id), caption || null, selectedFiles)
+      await api.createPostWithProgress(
+        parseInt(id),
+        caption || null,
+        selectedFiles,
+        (progress) => setUploadProgress(progress)
+      )
       setShowUploadModal(false)
       setSelectedFiles([])
       setCaption('')
+      setUploadProgress(0)
       await loadGroupData()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Erreur lors de l\'upload')
@@ -115,10 +130,15 @@ function GroupPage() {
     }
   }
 
-  const handleImageClick = (mediaItem: MediaWithPost, postMediaList: MediaWithPost[]) => {
-    const sortedMedia = postMediaList.sort((a, b) => a.order - b.order)
-    const index = sortedMedia.findIndex(m => m.id === mediaItem.id)
-    setModalMediaList(sortedMedia)
+  const handleImageClick = (mediaItem: MediaWithPost) => {
+    // Utiliser tous les médias du groupe, triés par date de post (plus récent en premier)
+    const allMedia = [...media].sort((a, b) => {
+      const dateA = a.post?.created_at || ''
+      const dateB = b.post?.created_at || ''
+      return dateB.localeCompare(dateA)
+    })
+    const index = allMedia.findIndex(m => m.id === mediaItem.id)
+    setModalMediaList(allMedia)
     setCurrentMediaIndex(index >= 0 ? index : 0)
     setSelectedMedia(mediaItem)
     setShowImageModal(true)
@@ -208,10 +228,63 @@ function GroupPage() {
       setGroupMembers(prev => prev.map(m =>
         m.id === memberId ? { ...m, role: newRole } : m
       ))
+      setMembersError(null)
     } catch (err) {
-      setSettingsError(err instanceof Error ? err.message : 'Erreur lors du changement de rôle')
+      setMembersError(err instanceof Error ? err.message : 'Erreur lors du changement de rôle')
     }
   }
+
+  const handleRemoveMember = async (memberId: number) => {
+    try {
+      await api.removeMember(memberId)
+      // Retirer le membre de la liste localement
+      setGroupMembers(prev => prev.filter(m => m.id !== memberId))
+      setMembersError(null)
+    } catch (err) {
+      setMembersError(err instanceof Error ? err.message : 'Erreur lors de la suppression du membre')
+    }
+  }
+
+  const handleOpenMembersModal = () => {
+    setMembersError(null)
+    setShowMembersModal(true)
+    setShowDropdown(false)
+  }
+
+  const handleLeaveGroup = async () => {
+    if (!currentMember) return
+
+    // Le créateur ne peut pas quitter le groupe
+    if (currentMember.role === 3) {
+      alert('Le créateur ne peut pas quitter le groupe. Vous devez d\'abord transférer la propriété ou supprimer le groupe.')
+      return
+    }
+
+    if (!confirm('Êtes-vous sûr de vouloir quitter ce groupe ?')) return
+
+    try {
+      await api.removeMember(currentMember.id)
+      navigate('/dashboard')
+    } catch (err) {
+      console.error('Erreur lors de la sortie du groupe:', err)
+    }
+  }
+
+  // Fermer le dropdown quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.dropdown-container')) {
+        setShowDropdown(false)
+      }
+    }
+
+    if (showDropdown) {
+      document.addEventListener('click', handleClickOutside)
+    }
+
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showDropdown])
 
   const handleOpenInviteModal = () => {
     if (group?.invite_code) {
@@ -314,10 +387,10 @@ function GroupPage() {
             </svg>
             Retour
           </Link>
-          <Link to="/" className="logo">
+          <div className="logo">
             <img src={logo} alt="Closo" className="logo-img" />
             <span>Closo</span>
-          </Link>
+          </div>
           <div className="nav-spacer"></div>
         </div>
       </nav>
@@ -339,24 +412,6 @@ function GroupPage() {
             </div>
           </div>
           <div className="group-header-actions">
-            {canManageGroup && (
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setSettingsError(null)
-                  setEditName(group?.nom || '')
-                  setEditDescription(group?.description || '')
-                  setEditImageFile(null)
-                  setShowSettingsModal(true)
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Parametres
-              </button>
-            )}
             {canManageGroup && (
               <button
                 className="btn btn-secondary"
@@ -383,6 +438,71 @@ function GroupPage() {
               </svg>
               Ajouter des photos
             </button>
+
+            {/* Menu déroulant */}
+            <div className="dropdown-container">
+              <button
+                className="btn btn-secondary btn-icon"
+                onClick={() => setShowDropdown(!showDropdown)}
+                aria-label="Plus d'options"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="5" cy="12" r="2" fill="currentColor"/>
+                  <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                  <circle cx="19" cy="12" r="2" fill="currentColor"/>
+                </svg>
+              </button>
+
+              {showDropdown && (
+                <div className="dropdown-menu">
+                  <button
+                    className="dropdown-item"
+                    onClick={handleOpenMembersModal}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    Membres ({groupMembers.length})
+                  </button>
+
+                  {canManageGroup && (
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setSettingsError(null)
+                        setEditName(group?.nom || '')
+                        setEditDescription(group?.description || '')
+                        setEditImageFile(null)
+                        setShowSettingsModal(true)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                      Paramètres
+                    </button>
+                  )}
+
+                  <div className="dropdown-divider"></div>
+
+                  <button
+                    className="dropdown-item dropdown-item-danger"
+                    onClick={handleLeaveGroup}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Quitter le groupe
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -425,7 +545,7 @@ function GroupPage() {
                       <div
                         key={mediaItem.id}
                         className="media-item"
-                        onClick={() => handleImageClick(mediaItem, postMedia)}
+                        onClick={() => handleImageClick(mediaItem)}
                       >
                         <img
                           src={api.getMediaUrl(mediaItem.media_url)}
@@ -504,11 +624,11 @@ function GroupPage() {
                 )}
 
                 <div className="form-field">
-                  <label htmlFor="files">Photos ou videos</label>
+                  <label htmlFor="files">Photos</label>
                   <input
                     type="file"
                     id="files"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     multiple
                     onChange={handleFileSelect}
                     required
@@ -532,6 +652,23 @@ function GroupPage() {
                   />
                 </div>
               </div>
+
+              {/* Barre de progression */}
+              {isSubmitting && (
+                <div className="upload-progress-container">
+                  <div className="upload-progress-info">
+                    <span>Upload en cours...</span>
+                    <span className="upload-progress-percent">{uploadProgress}%</span>
+                  </div>
+                  <div className="upload-progress-bar">
+                    <div
+                      className="upload-progress-fill"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="modal-footer">
                 <button
                   type="button"
@@ -546,7 +683,7 @@ function GroupPage() {
                   className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}
                   disabled={isSubmitting || selectedFiles.length === 0}
                 >
-                  {isSubmitting ? 'Upload...' : 'Publier'}
+                  {isSubmitting ? `Upload... ${uploadProgress}%` : 'Publier'}
                 </button>
               </div>
             </form>
@@ -661,63 +798,6 @@ function GroupPage() {
                     placeholder="Decrivez votre groupe..."
                   />
                 </div>
-
-                {/* Gestion des membres - uniquement pour le créateur */}
-                {currentMember?.role === 3 && (
-                  <div className="form-field">
-                    <label>Gestion des membres</label>
-                    <div className="members-list">
-                      {groupMembers
-                        .filter(m => m.role !== 3) // Ne pas afficher le créateur
-                        .sort((a, b) => b.role - a.role) // Admins en premier
-                        .map(member => (
-                          <div key={member.id} className="member-item">
-                            <div className="member-info">
-                              <div className="member-avatar">
-                                {member.user?.username?.charAt(0).toUpperCase() || 'U'}
-                              </div>
-                              <div className="member-details">
-                                <span className="member-name">{member.user?.username}</span>
-                                <span className={`member-role ${member.role === 2 ? 'admin' : 'member'}`}>
-                                  {getRoleName(member.role)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="member-actions">
-                              {member.role === 1 ? (
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-secondary"
-                                  onClick={() => handleRoleChange(member.id, 2)}
-                                  disabled={isSubmitting}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 15l-2-2m0 0l2-2m-2 2h12M4 4v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                  Promouvoir admin
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-ghost"
-                                  onClick={() => handleRoleChange(member.id, 1)}
-                                  disabled={isSubmitting}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 9l2 2m0 0l-2 2m2-2H4M20 4v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                  Retirer admin
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      {groupMembers.filter(m => m.role !== 3).length === 0 && (
-                        <p className="members-empty">Aucun membre dans ce groupe</p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="modal-footer">
                 <button
@@ -801,6 +881,132 @@ function GroupPage() {
               <button
                 className="btn btn-primary"
                 onClick={() => setShowInviteModal(false)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Membres */}
+      {showMembersModal && (
+        <div className="modal-overlay" onClick={() => setShowMembersModal(false)}>
+          <div className="modal modal-members" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Membres du groupe</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowMembersModal(false)}
+                aria-label="Fermer"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              {membersError && (
+                <div className="modal-error">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                  </svg>
+                  <span>{membersError}</span>
+                </div>
+              )}
+
+              <div className="members-modal-list">
+                {groupMembers
+                  .sort((a, b) => b.role - a.role) // Créateur, puis admins, puis membres
+                  .map(member => {
+                    const isCreator = member.role === 3
+                    const isAdmin = member.role === 2
+                    const isSelf = member.user_id === user?.id
+                    const currentUserIsCreator = currentMember?.role === 3
+                    const currentUserIsAdmin = currentMember?.role === 2
+
+                    // Peut promouvoir/rétrograder : seulement le créateur, et pas sur lui-même
+                    const canChangeRole = currentUserIsCreator && !isCreator && !isSelf
+
+                    // Peut supprimer : créateur peut supprimer tout le monde sauf lui-même
+                    // Admin peut supprimer les membres (pas les admins ni le créateur)
+                    const canRemove = !isSelf && !isCreator && (
+                      currentUserIsCreator || (currentUserIsAdmin && !isAdmin)
+                    )
+
+                    return (
+                      <div key={member.id} className="member-modal-item">
+                        <div className="member-info">
+                          <div className="member-avatar">
+                            {member.user?.username?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <div className="member-details">
+                            <span className="member-name">
+                              {member.user?.username}
+                              {isSelf && <span className="member-you">(vous)</span>}
+                            </span>
+                            <span className={`member-role ${isCreator ? 'creator' : isAdmin ? 'admin' : 'member'}`}>
+                              {getRoleName(member.role)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="member-actions">
+                          {canChangeRole && (
+                            isAdmin ? (
+                              <button
+                                className="btn btn-sm btn-ghost"
+                                onClick={() => handleRoleChange(member.id, 1)}
+                                title="Retirer les droits admin"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 9l2 2m0 0l-2 2m2-2H4M20 4v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                Retirer admin
+                              </button>
+                            ) : (
+                              <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => handleRoleChange(member.id, 2)}
+                                title="Promouvoir en admin"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 15l-2-2m0 0l2-2m-2 2h12M4 4v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                Promouvoir
+                              </button>
+                            )
+                          )}
+                          {canRemove && (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleRemoveMember(member.id)}
+                              title="Retirer du groupe"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                <circle cx="8.5" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                                <line x1="18" y1="8" x2="23" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                <line x1="23" y1="8" x2="18" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                              </svg>
+                              Retirer
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+
+              {groupMembers.length === 0 && (
+                <p className="members-empty">Aucun membre dans ce groupe</p>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowMembersModal(false)}
               >
                 Fermer
               </button>

@@ -95,6 +95,30 @@ class ApiService {
     return this.request<User>('/users/me')
   }
 
+  async updateUsername(username: string): Promise<User> {
+    return this.request<User>('/users/me/username', {
+      method: 'PUT',
+      body: JSON.stringify({ username }),
+    })
+  }
+
+  async updatePassword(currentPassword: string, newPassword: string): Promise<User> {
+    return this.request<User>('/users/me/password', {
+      method: 'PUT',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    })
+  }
+
+  async uploadAvatar(file: File): Promise<User> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return this.request<User>('/users/me/upload-avatar', {
+      method: 'POST',
+      body: formData,
+    })
+  }
+
   // ============================================================
   // Groupes
   // ============================================================
@@ -192,6 +216,68 @@ class ApiService {
     return this.request<Post>('/posts/', {
       method: 'POST',
       body: formData,
+    })
+  }
+
+  createPostWithProgress(
+    groupId: number,
+    caption: string | null,
+    files: File[],
+    onProgress: (progress: number) => void
+  ): Promise<Post> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData()
+      formData.append('group_id', groupId.toString())
+      if (caption) {
+        formData.append('caption', caption)
+      }
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+
+      const xhr = new XMLHttpRequest()
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100)
+          onProgress(progress)
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText)
+            resolve(response)
+          } catch {
+            reject(new Error('Erreur lors du parsing de la réponse'))
+          }
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText)
+            reject(new Error(error.detail || `Erreur ${xhr.status}`))
+          } catch {
+            reject(new Error(`Erreur ${xhr.status}`))
+          }
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Erreur réseau'))
+      })
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload annulé'))
+      })
+
+      xhr.open('POST', `${API_BASE_URL}/posts/`)
+
+      const token = this.getToken()
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+      }
+
+      xhr.send(formData)
     })
   }
 

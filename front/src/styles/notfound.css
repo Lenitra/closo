@@ -1,0 +1,281 @@
+/* ==========================================================================
+   Closo - 404 Not Found Styles
+   ========================================================================== */
+
+.notfound-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.notfound-container {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    max-width: 500px;
+    position: relative;
+    z-index: 1;
+}
+
+.notfound-logo {
+    margin-bottom: var(--spacing-xl);
+}
+
+.notfound-logo img {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    animation: float 3s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Ghost Illustration
+   -------------------------------------------------------------------------- */
+.notfound-illustration {
+    margin-bottom: var(--spacing-xl);
+}
+
+.ghost {
+    display: inline-block;
+    position: relative;
+    animation: ghostFloat 2s ease-in-out infinite;
+}
+
+.ghost-body {
+    width: 100px;
+    height: 120px;
+    background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
+    border-radius: 50px 50px 0 0;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.ghost-eyes {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 35px;
+}
+
+.ghost-eye {
+    width: 14px;
+    height: 20px;
+    background: #1a1a2e;
+    border-radius: 50%;
+    animation: blink 4s infinite;
+}
+
+.ghost-mouth {
+    width: 20px;
+    height: 10px;
+    background: #1a1a2e;
+    border-radius: 0 0 20px 20px;
+    margin: 15px auto 0;
+}
+
+.ghost-tail {
+    display: flex;
+    justify-content: center;
+    margin-top: -1px;
+}
+
+.ghost-wave {
+    width: 33px;
+    height: 25px;
+    background: linear-gradient(180deg, #e8e8e8 0%, #ffffff 100%);
+    border-radius: 0 0 50% 50%;
+    animation: waveTail 1s ease-in-out infinite;
+}
+
+.ghost-wave:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.ghost-wave:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes ghostFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes blink {
+    0%, 90%, 100% {
+        transform: scaleY(1);
+    }
+    95% {
+        transform: scaleY(0.1);
+    }
+}
+
+@keyframes waveTail {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+    50% {
+        transform: scaleY(0.8);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Text Content
+   -------------------------------------------------------------------------- */
+.notfound-title {
+    font-size: 120px;
+    font-weight: 800;
+    color: transparent;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+}
+
+.notfound-subtitle {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-white);
+    margin-bottom: var(--spacing-sm);
+}
+
+.notfound-description {
+    font-size: var(--font-size-base);
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: var(--spacing-xl);
+    line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   Countdown
+   -------------------------------------------------------------------------- */
+.notfound-countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.countdown-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-white);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Button
+   -------------------------------------------------------------------------- */
+.notfound-page .btn-lg {
+    padding: 16px 32px;
+    font-size: var(--font-size-base);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.notfound-hint {
+    margin-top: var(--spacing-xl);
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Floating Elements (Stars)
+   -------------------------------------------------------------------------- */
+.floating-elements {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.floating-star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--color-white);
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+.floating-star::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    border-radius: inherit;
+    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes twinkle {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(5deg);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+    .notfound-title {
+        font-size: 80px;
+    }
+
+    .notfound-subtitle {
+        font-size: var(--font-size-lg);
+    }
+
+    .ghost-body {
+        width: 80px;
+        height: 100px;
+    }
+
+    .ghost-wave {
+        width: 27px;
+        height: 20px;
+    }
+}

@@ -27,3 +27,25 @@ class UserRepository(BaseRepository[User]):
         db.commit()
         db.refresh(user)
         return user
+
+    def update_username(self, db: Session, user_id: int, username: str) -> User:
+        """Update user username"""
+        user = self.get(db, user_id)
+        if not user:
+            raise ValueError(f"User with id {user_id} not found")
+        user.username = username
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    def update_password(self, db: Session, user_id: int, hashed_password: str) -> User:
+        """Update user password"""
+        user = self.get(db, user_id)
+        if not user:
+            raise ValueError(f"User with id {user_id} not found")
+        user.hashed_password = hashed_password
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user

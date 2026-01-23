@@ -192,10 +192,10 @@ function Dashboard() {
       {/* Navigation */}
       <nav className="dashboard-nav">
         <div className="nav-container">
-          <Link to="/" className="logo">
+          <div className="logo">
             <img src={logo} alt="Closo" className="logo-img" />
             <span>Closo</span>
-          </Link>
+          </div>
           <div className="nav-actions">
             <button className="btn btn-ghost btn-sm">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -230,7 +230,26 @@ function Dashboard() {
                     <span className="user-menu-email">{user?.email}</span>
                   </div>
                   <div className="user-menu-divider"></div>
-                  <button className="user-menu-item" onClick={handleLogout}>
+                  <Link to="/profile" className="user-menu-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="7"
+                        r="4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                    Mon profil
+                  </Link>
+                  <button className="user-menu-item user-menu-item-danger" onClick={handleLogout}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path
                         d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
