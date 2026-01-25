@@ -9,7 +9,7 @@ class Post(SQLModel, table=True):
     __tablename__ = "post"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    group_member_id: int = Field(foreign_key="groupmember.id")
+    group_member_id: Optional[int] = Field(default=None, foreign_key="groupmember.id")
     group_id: int = Field(foreign_key="group.id")
     caption: Optional[str] = Field(default=None)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -60,7 +60,7 @@ class PostRead(SQLModel):
     model_config = {"from_attributes": True}
 
     id: int
-    group_member_id: int
+    group_member_id: Optional[int] = None
     group_id: int
     caption: Optional[str] = None
     created_at: Optional[datetime] = None

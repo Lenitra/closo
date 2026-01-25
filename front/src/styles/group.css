@@ -997,3 +997,47 @@
     border-radius: var(--radius-full);
     transition: width 0.3s ease;
 }
+
+/* --------------------------------------------------------------------------
+   Leave Group Modal
+   -------------------------------------------------------------------------- */
+.modal-leave {
+    max-width: 440px;
+}
+
+.leave-confirmation,
+.leave-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) 0;
+}
+
+.leave-confirmation svg,
+.leave-warning svg {
+    color: var(--color-gray-400);
+}
+
+.leave-warning svg {
+    color: var(--color-warning, #f59e0b);
+}
+
+.leave-confirmation p,
+.leave-warning p {
+    font-size: var(--font-size-base);
+    color: var(--color-gray-700);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.leave-confirmation p strong,
+.leave-warning p strong {
+    color: var(--color-gray-900);
+}
+
+.leave-info {
+    font-size: var(--font-size-sm) !important;
+    color: var(--color-gray-500) !important;
+}

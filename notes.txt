@@ -1,20 +1,5 @@
-Ajouter un bouton pour afficher la modale des membres d'un groupe (supprimer de la modale des paramètres). Si on est  créateur du groupe, on doit pouvoir ajouter et supprimer des admin. Si on est créateur ou admin du groupe, on doit pouvoir supprimer des gens du groupe. Si on est simple membre, on doit juste pouvoir voir la liste des membres.
+Créer une page admin ou seul les utilisateurs avec le rôle "admin" role id 3 peuvent accéder. Il faut afficher toutes les images uploadées par les utilisateurs avec un bouton supprimer à côté de chaque image. Le nombre total d'images ainsi que le poids total en Mo doivent être affichés en haut de la page.
 
-Pour les boutons : membres et paramètres, les disimuler dans un menu déroulant (icône 3 points horizontaux) tout à droite des boutons "Inviter" et "Ajouter des photos". De plus ajouter un bouton quitter le groupe dans ce menu déroulant.
+Dans la page @front/src/pages/Group.tsx dans la liste des membres et sur chaque poste afficher l'image de profil de l'utilisateur
 
-Supprimer le fait de pouvoir poster des vidéos.
-
-Supprimer la redirection vers la page d'accueil lorsqu'on clique sur le logo.
-
-Créer un système de sauvegarde automatique de la BDD et des fichiers toutes les nuits à 2h du matin. 
-+ Créer un script pour à partir du ssh récupérer la dernière sauvegarde sur mon pc local.
-
-Profil utilisateur :
-- Profile picture
-- Username
-- Mot de passe
-- Voir ses posts dans ses différents groupes
-
-
-
-Sur le slider entre les images, faire en sorte qu'on puisse voir toutes les images du groupe, pas seulement du post
+Dans le backend, delete_groupmember ajouter une sécurité pour que seul les admins du groupe ou le créateur du groupe puisse supprimer un membre du groupe.

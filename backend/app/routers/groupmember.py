@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from sqlalchemy.orm import selectinload
 from app.entities.groupmember import GroupMember, GroupMemberRead
+from app.entities.post import Post
 from app.repositories.groupmember_repository import GroupMemberRepository
 from app.utils.core.database import get_db
 from app.utils.auth.roles import require_role, get_current_user
@@ -77,8 +78,43 @@ def update_groupmember(
     "/{id}", status_code=204, description="Route disponible pour les rôles: ['user']"
 )
 def delete_groupmember(
-    id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["user"]))
+    id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
+    # Récupérer le membre à supprimer
+    member = repo.get_by_id(db, id)
+    if not member:
+        raise HTTPException(status_code=404, detail="GroupMember not found")
+
+    # Le créateur ne peut pas quitter le groupe
+    if member.role == 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Le créateur ne peut pas quitter le groupe. Transférez d'abord la propriété ou supprimez le groupe."
+        )
+
+    # Vérifier que l'utilisateur est soit le membre lui-même, soit un admin/créateur du groupe
+    is_self = member.user_id == current_user.id
+    current_member_statement = select(GroupMember).where(
+        GroupMember.group_id == member.group_id,
+        GroupMember.user_id == current_user.id
+    )
+    current_member = db.exec(current_member_statement).first()
+    is_admin_or_creator = current_member and current_member.role >= 2
+
+    if not is_self and not is_admin_or_creator:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous n'avez pas la permission de retirer ce membre."
+        )
+
+    # Dissocier les posts du membre (mettre group_member_id à NULL)
+    posts_statement = select(Post).where(Post.group_member_id == id)
+    posts = db.exec(posts_statement).all()
+    for post in posts:
+        post.group_member_id = None
+        db.add(post)
+
+    # Supprimer le membre
     ok = repo.delete(db, id)
     if not ok:
         raise HTTPException(status_code=404, detail="GroupMember not found")

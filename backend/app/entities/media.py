@@ -57,7 +57,7 @@ class PostBasic(SQLModel):
     model_config = {"from_attributes": True}
 
     id: int
-    group_member_id: int
+    group_member_id: Optional[int] = None
     group_id: int
     caption: Optional[str] = None
     created_at: Optional[datetime] = None

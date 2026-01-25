@@ -49,6 +49,11 @@ function GroupPage() {
   // Dropdown menu state
   const [showDropdown, setShowDropdown] = useState(false)
 
+  // Leave group modal state
+  const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
+
   // Vérifier si l'utilisateur est admin ou créateur (role >= 2)
   const canManageGroup = currentMember && currentMember.role >= 2
 
@@ -251,22 +256,25 @@ function GroupPage() {
     setShowDropdown(false)
   }
 
-  const handleLeaveGroup = async () => {
+  const handleLeaveGroup = () => {
+    if (!currentMember) return
+    setLeaveError(null)
+    setShowLeaveModal(true)
+    setShowDropdown(false)
+  }
+
+  const confirmLeaveGroup = async () => {
     if (!currentMember) return
 
-    // Le créateur ne peut pas quitter le groupe
-    if (currentMember.role === 3) {
-      alert('Le créateur ne peut pas quitter le groupe. Vous devez d\'abord transférer la propriété ou supprimer le groupe.')
-      return
-    }
-
-    if (!confirm('Êtes-vous sûr de vouloir quitter ce groupe ?')) return
+    setIsLeaving(true)
+    setLeaveError(null)
 
     try {
       await api.removeMember(currentMember.id)
       navigate('/dashboard')
     } catch (err) {
-      console.error('Erreur lors de la sortie du groupe:', err)
+      setLeaveError(err instanceof Error ? err.message : 'Erreur lors de la sortie du groupe')
+      setIsLeaving(false)
     }
   }
 
@@ -487,19 +495,23 @@ function GroupPage() {
                     </button>
                   )}
 
-                  <div className="dropdown-divider"></div>
+                  {currentMember?.role !== 3 && (
+                    <>
+                      <div className="dropdown-divider"></div>
 
-                  <button
-                    className="dropdown-item dropdown-item-danger"
-                    onClick={handleLeaveGroup}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Quitter le groupe
-                  </button>
+                      <button
+                        className="dropdown-item dropdown-item-danger"
+                        onClick={handleLeaveGroup}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Quitter le groupe
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1015,6 +1027,86 @@ function GroupPage() {
         </div>
       )}
 
+      {/* Modal Quitter le groupe */}
+      {showLeaveModal && (
+        <div className="modal-overlay" onClick={() => !isLeaving && setShowLeaveModal(false)}>
+          <div className="modal modal-leave" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Quitter le groupe</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowLeaveModal(false)}
+                disabled={isLeaving}
+                aria-label="Fermer"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              {leaveError && (
+                <div className="modal-error">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                  </svg>
+                  <span>{leaveError}</span>
+                </div>
+              )}
+
+              {currentMember?.role === 3 ? (
+                <div className="leave-warning">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                  <p>
+                    <strong>Vous êtes le créateur de ce groupe.</strong>
+                  </p>
+                  <p>
+                    Vous ne pouvez pas quitter le groupe. Vous devez d'abord transférer la propriété à un autre membre ou supprimer le groupe.
+                  </p>
+                </div>
+              ) : (
+                <div className="leave-confirmation">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <p>Êtes-vous sûr de vouloir quitter <strong>{group?.nom}</strong> ?</p>
+                  <p className="leave-info">
+                    Vous ne pourrez plus accéder aux photos et discussions de ce groupe.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowLeaveModal(false)}
+                disabled={isLeaving}
+              >
+                Annuler
+              </button>
+              {currentMember?.role !== 3 && (
+                <button
+                  type="button"
+                  className={`btn btn-danger ${isLeaving ? 'loading' : ''}`}
+                  onClick={confirmLeaveGroup}
+                  disabled={isLeaving}
+                >
+                  {isLeaving ? 'Départ en cours...' : 'Quitter le groupe'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Image agrandie */}
       {showImageModal && selectedMedia && (
         <div className="image-modal-overlay" onClick={handleCloseImageModal}>
@@ -1053,23 +1145,6 @@ function GroupPage() {
               src={api.getMediaUrl(selectedMedia.media_url)}
               alt={selectedMedia.post?.caption || ''}
             />
-
-            {/* Indicators */}
-            {modalMediaList.length > 1 && (
-              <div className="image-modal-indicators">
-                {modalMediaList.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`indicator-dot ${index === currentMediaIndex ? 'active' : ''}`}
-                    onClick={() => {
-                      setCurrentMediaIndex(index)
-                      setSelectedMedia(modalMediaList[index])
-                    }}
-                    aria-label={`Aller à l'image ${index + 1}`}
-                  />
-                ))}
-              </div>
-            )}
 
             {selectedMedia.post?.caption && (
               <div className="image-modal-caption">
