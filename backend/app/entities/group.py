@@ -39,3 +39,10 @@ class GroupRead(SQLModel):
     image_url: Optional[str] = None
     invite_code: Optional[str] = None
     creator: Optional[UserBasic] = None
+
+
+class GroupWithStats(GroupRead):
+    """Schéma de lecture avec statistiques (nombre de membres + rôle de l'utilisateur actuel)"""
+
+    member_count: int
+    current_user_role: int

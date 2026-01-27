@@ -1,5 +1,3 @@
-Créer une page admin ou seul les utilisateurs avec le rôle "admin" role id 3 peuvent accéder. Il faut afficher toutes les images uploadées par les utilisateurs avec un bouton supprimer à côté de chaque image. Le nombre total d'images ainsi que le poids total en Mo doivent être affichés en haut de la page.
-
-Dans la page @front/src/pages/Group.tsx dans la liste des membres et sur chaque poste afficher l'image de profil de l'utilisateur
-
 Dans le backend, delete_groupmember ajouter une sécurité pour que seul les admins du groupe ou le créateur du groupe puisse supprimer un membre du groupe.
+
+Au niveau d'un post pouvoir modifier la description d'un post si on en est le créateur. Ajouter un icone à gauche de la poubelle pour éditer le post. Ca ouvre un modal avec un textarea prérempli avec la description actuelle. On peut modifier et sauvegarder. 

@@ -6,16 +6,11 @@ import type { Group } from "../types";
 import logo from "../assets/logo.png";
 import "../styles/dashboard.css";
 
-interface GroupWithMemberCount extends Group {
-  memberCount?: number;
-  role?: number;
-}
-
 function Dashboard() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
 
-  const [groups, setGroups] = useState<GroupWithMemberCount[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,27 +38,7 @@ function Dashboard() {
         setIsLoading(true);
         setError(null);
         const groupsData = await api.getGroups();
-
-        // Charger le nombre de membres pour chaque groupe
-        const groupsWithCounts = await Promise.all(
-          groupsData.map(async (group) => {
-            try {
-              const { count } = await api.getGroupMemberCount(group.id);
-              // Déterminer le rôle de l'utilisateur dans ce groupe
-              const members = await api.getGroupMembers(group.id);
-              const currentMember = members.find((m) => m.user_id === user?.id);
-              return {
-                ...group,
-                memberCount: count,
-                role: currentMember?.role,
-              };
-            } catch {
-              return { ...group, memberCount: 0 };
-            }
-          }),
-        );
-
-        setGroups(groupsWithCounts);
+        setGroups(groupsData);
       } catch (err) {
         setError(
           err instanceof Error
@@ -78,7 +53,7 @@ function Dashboard() {
     if (isAuthenticated) {
       loadGroups();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
 
   const getGroupInitials = (name: string) => {
@@ -95,27 +70,7 @@ function Dashboard() {
       setIsLoading(true);
       setError(null);
       const groupsData = await api.getGroups();
-
-      // Charger le nombre de membres pour chaque groupe
-      const groupsWithCounts = await Promise.all(
-        groupsData.map(async (group) => {
-          try {
-            const { count } = await api.getGroupMemberCount(group.id);
-            // Déterminer le rôle de l'utilisateur dans ce groupe
-            const members = await api.getGroupMembers(group.id);
-            const currentMember = members.find((m) => m.user_id === user?.id);
-            return {
-              ...group,
-              memberCount: count,
-              role: currentMember?.role,
-            };
-          } catch {
-            return { ...group, memberCount: 0 };
-          }
-        }),
-      );
-
-      setGroups(groupsWithCounts);
+      setGroups(groupsData);
     } catch (err) {
       setError(
         err instanceof Error
@@ -221,7 +176,15 @@ function Dashboard() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 aria-label="Menu utilisateur"
               >
-                {user?.username?.charAt(0).toUpperCase() || "U"}
+                {user?.avatar_url ? (
+                  <img
+                    src={api.getMediaUrl(user.avatar_url)}
+                    alt={user.username}
+                    className="user-avatar-img"
+                  />
+                ) : (
+                  user?.username?.charAt(0).toUpperCase() || "U"
+                )}
               </button>
               {showUserMenu && (
                 <div className="user-menu">
@@ -249,6 +212,27 @@ function Dashboard() {
                     </svg>
                     Mon profil
                   </Link>
+                  {user?.role_id === 3 && (
+                    <Link to="/admin" className="user-menu-item">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Administration
+                    </Link>
+                  )}
                   <button className="user-menu-item user-menu-item-danger" onClick={handleLogout}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path
@@ -446,8 +430,8 @@ function Dashboard() {
                             strokeLinecap="round"
                           />
                         </svg>
-                        {group.memberCount} membre
-                        {(group.memberCount ?? 0) !== 1 ? "s" : ""}
+                        {group.member_count} membre
+                        {(group.member_count ?? 0) !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>

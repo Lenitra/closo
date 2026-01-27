@@ -54,8 +54,20 @@ function GroupPage() {
   const [leaveError, setLeaveError] = useState<string | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
 
-  // Vérifier si l'utilisateur est admin ou créateur (role >= 2)
-  const canManageGroup = currentMember && currentMember.role >= 2
+  // Image loading state
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set())
+
+  // Delete post modal state
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<number | null>(null)
+  const [deletePostError, setDeletePostError] = useState<string | null>(null)
+  const [isDeletingPost, setIsDeletingPost] = useState(false)
+
+  // Mode admin global : utilisateur avec role_id=3 qui n'est pas membre du groupe
+  const isGlobalAdminNotMember = user?.role_id === 3 && !groupMembers.find(m => m.user_id === user?.id)
+
+  // Vérifier si l'utilisateur est admin ou créateur (role >= 2) ou admin global
+  const canManageGroup = (currentMember && currentMember.role >= 2) || isGlobalAdminNotMember
 
   // Redirection si non authentifié
   useEffect(() => {
@@ -171,6 +183,11 @@ function GroupPage() {
     setCurrentMediaIndex(0)
   }, [])
 
+  // Handle image load for skeleton
+  const handleImageLoad = useCallback((mediaId: number) => {
+    setLoadedImages(prev => new Set(prev).add(mediaId))
+  }, [])
+
   // Keyboard navigation
   useEffect(() => {
     if (!showImageModal) return
@@ -264,18 +281,62 @@ function GroupPage() {
   }
 
   const confirmLeaveGroup = async () => {
-    if (!currentMember) return
+    if (!currentMember || !group) return
 
     setIsLeaving(true)
     setLeaveError(null)
 
     try {
-      await api.removeMember(currentMember.id)
+      // Si le créateur quitte, supprimer le groupe entier
+      if (currentMember.role === 3) {
+        await api.deleteGroup(group.id)
+      } else {
+        // Sinon, juste retirer le membre
+        await api.removeMember(currentMember.id)
+      }
       navigate('/dashboard')
     } catch (err) {
-      setLeaveError(err instanceof Error ? err.message : 'Erreur lors de la sortie du groupe')
+      const errorMessage = currentMember.role === 3
+        ? 'Erreur lors de la suppression du groupe'
+        : 'Erreur lors de la sortie du groupe'
+      setLeaveError(err instanceof Error ? err.message : errorMessage)
       setIsLeaving(false)
     }
+  }
+
+  // Supprimer un post
+  const handleDeletePost = (postId: number) => {
+    setPostToDelete(postId)
+    setDeletePostError(null)
+    setShowDeletePostModal(true)
+  }
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return
+
+    setIsDeletingPost(true)
+    setDeletePostError(null)
+
+    try {
+      await api.deletePost(postToDelete)
+      // Retirer le post de la liste locale en filtrant le média
+      setMedia(prev => prev.filter(m => m.post?.id !== postToDelete))
+      setShowDeletePostModal(false)
+      setPostToDelete(null)
+    } catch (err) {
+      setDeletePostError(err instanceof Error ? err.message : 'Erreur lors de la suppression du post')
+    } finally {
+      setIsDeletingPost(false)
+    }
+  }
+
+  // Vérifier si l'utilisateur peut supprimer un post
+  const canDeletePost = (postUserId: number | undefined): boolean => {
+    // Admin global peut supprimer n'importe quel post
+    if (isGlobalAdminNotMember) return true
+    if (!currentMember || !postUserId) return false
+    // L'auteur peut supprimer son post OU admin/créateur peut supprimer n'importe quel post
+    return postUserId === user?.id || currentMember.role >= 2
   }
 
   // Fermer le dropdown quand on clique ailleurs
@@ -336,6 +397,23 @@ function GroupPage() {
       case 2: return 'Admin'
       default: return 'Membre'
     }
+  }
+
+  const renderAvatar = (user: { username?: string; avatar_url?: string | null } | undefined | null, className: string) => {
+    if (user?.avatar_url) {
+      return (
+        <img
+          src={api.getMediaUrl(user.avatar_url)}
+          alt={user.username || 'User'}
+          className={className}
+        />
+      )
+    }
+    return (
+      <div className={className}>
+        {user?.username?.charAt(0).toUpperCase() || 'U'}
+      </div>
+    )
   }
 
   const formatDate = (dateString: string) => {
@@ -434,18 +512,20 @@ function GroupPage() {
                 Inviter
               </button>
             )}
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setUploadError(null)
-                setShowUploadModal(true)
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Ajouter des photos
-            </button>
+            {!isGlobalAdminNotMember && (
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setUploadError(null)
+                  setShowUploadModal(true)
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Ajouter des photos
+              </button>
+            )}
 
             {/* Menu déroulant */}
             <div className="dropdown-container">
@@ -495,7 +575,7 @@ function GroupPage() {
                     </button>
                   )}
 
-                  {currentMember?.role !== 3 && (
+                  {!isGlobalAdminNotMember && (
                     <>
                       <div className="dropdown-divider"></div>
 
@@ -504,11 +584,20 @@ function GroupPage() {
                         onClick={handleLeaveGroup}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          {currentMember?.role === 3 ? (
+                            <>
+                              <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </>
+                          ) : (
+                            <>
+                              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </>
+                          )}
                         </svg>
-                        Quitter le groupe
+                        {currentMember?.role === 3 ? 'Supprimer le groupe' : 'Quitter le groupe'}
                       </button>
                     </>
                   )}
@@ -518,6 +607,16 @@ function GroupPage() {
           </div>
         </div>
       </header>
+
+      {/* Bandeau mode administrateur */}
+      {isGlobalAdminNotMember && (
+        <div className="admin-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Mode administrateur
+        </div>
+      )}
 
       {/* Contenu principal */}
       <main className="group-main">
@@ -541,14 +640,24 @@ function GroupPage() {
                   {/* Header du post */}
                   <div className="post-header">
                     <div className="post-author">
-                      <div className="author-avatar">
-                        {post?.group_member?.user?.username?.charAt(0).toUpperCase() || 'U'}
-                      </div>
+                      {renderAvatar(post?.group_member?.user, 'author-avatar')}
                       <div className="author-info">
                         <span className="author-name">{post?.group_member?.user?.username}</span>
                         <span className="post-date">{post?.created_at && formatDate(post.created_at)}</span>
                       </div>
                     </div>
+                    {canDeletePost(post?.group_member?.user?.id) && post?.id && (
+                      <button
+                        className="btn-icon btn-icon-danger"
+                        onClick={() => handleDeletePost(post.id)}
+                        aria-label="Supprimer le post"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
 
                   {/* Galerie de médias */}
@@ -556,13 +665,15 @@ function GroupPage() {
                     {postMedia.sort((a, b) => a.order - b.order).map((mediaItem) => (
                       <div
                         key={mediaItem.id}
-                        className="media-item"
+                        className={`media-item ${loadedImages.has(mediaItem.id) ? 'image-loaded' : ''}`}
                         onClick={() => handleImageClick(mediaItem)}
                       >
                         <img
                           src={api.getMediaUrl(mediaItem.media_url)}
                           alt={post?.caption || ''}
                           loading="lazy"
+                          className={loadedImages.has(mediaItem.id) ? 'loaded' : ''}
+                          onLoad={() => handleImageLoad(mediaItem.id)}
                         />
                       </div>
                     ))}
@@ -588,19 +699,25 @@ function GroupPage() {
                 </svg>
               </div>
               <h2>Aucune photo pour le moment</h2>
-              <p>Soyez le premier a partager un moment avec ce groupe !</p>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setUploadError(null)
-                  setShowUploadModal(true)
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Ajouter des photos
-              </button>
+              {isGlobalAdminNotMember ? (
+                <p>Ce groupe ne contient aucune photo.</p>
+              ) : (
+                <>
+                  <p>Soyez le premier a partager un moment avec ce groupe !</p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setUploadError(null)
+                      setShowUploadModal(true)
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Ajouter des photos
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -951,9 +1068,7 @@ function GroupPage() {
                     return (
                       <div key={member.id} className="member-modal-item">
                         <div className="member-info">
-                          <div className="member-avatar">
-                            {member.user?.username?.charAt(0).toUpperCase() || 'U'}
-                          </div>
+                          {renderAvatar(member.user, 'member-avatar')}
                           <div className="member-details">
                             <span className="member-name">
                               {member.user?.username}
@@ -1032,7 +1147,7 @@ function GroupPage() {
         <div className="modal-overlay" onClick={() => !isLeaving && setShowLeaveModal(false)}>
           <div className="modal modal-leave" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Quitter le groupe</h2>
+              <h2>{currentMember?.role === 3 ? 'Supprimer le groupe' : 'Quitter le groupe'}</h2>
               <button
                 className="modal-close"
                 onClick={() => setShowLeaveModal(false)}
@@ -1063,10 +1178,13 @@ function GroupPage() {
                     <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2"/>
                   </svg>
                   <p>
-                    <strong>Vous êtes le créateur de ce groupe.</strong>
+                    <strong>Attention : Suppression définitive</strong>
                   </p>
                   <p>
-                    Vous ne pouvez pas quitter le groupe. Vous devez d'abord transférer la propriété à un autre membre ou supprimer le groupe.
+                    En tant que créateur, supprimer votre compte du groupe entraînera la <strong>suppression complète</strong> du groupe <strong>{group?.nom}</strong>.
+                  </p>
+                  <p className="leave-info">
+                    Toutes les photos, posts et membres seront définitivement supprimés. Cette action est irréversible.
                   </p>
                 </div>
               ) : (
@@ -1092,16 +1210,71 @@ function GroupPage() {
               >
                 Annuler
               </button>
-              {currentMember?.role !== 3 && (
-                <button
-                  type="button"
-                  className={`btn btn-danger ${isLeaving ? 'loading' : ''}`}
-                  onClick={confirmLeaveGroup}
-                  disabled={isLeaving}
-                >
-                  {isLeaving ? 'Départ en cours...' : 'Quitter le groupe'}
-                </button>
+              <button
+                type="button"
+                className={`btn btn-danger ${isLeaving ? 'loading' : ''}`}
+                onClick={confirmLeaveGroup}
+                disabled={isLeaving}
+              >
+                {isLeaving
+                  ? (currentMember?.role === 3 ? 'Suppression...' : 'Départ en cours...')
+                  : (currentMember?.role === 3 ? 'Supprimer le groupe' : 'Quitter le groupe')
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Suppression Post */}
+      {showDeletePostModal && (
+        <div className="modal-overlay" onClick={() => setShowDeletePostModal(false)}>
+          <div className="modal modal-delete-post" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Supprimer le post</h2>
+              <button className="modal-close" onClick={() => setShowDeletePostModal(false)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {deletePostError && (
+                <div className="error-message">{deletePostError}</div>
               )}
+
+              <div className="delete-confirmation">
+                <div className="warning-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="10" y1="11" x2="10" y2="17" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="14" y1="11" x2="14" y2="17" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </div>
+                <p>Êtes-vous sûr de vouloir supprimer ce post ?</p>
+                <p className="delete-info">Cette action est irréversible. Le post et tous ses médias associés seront définitivement supprimés.</p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowDeletePostModal(false)}
+                disabled={isDeletingPost}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className={`btn btn-danger ${isDeletingPost ? 'loading' : ''}`}
+                onClick={confirmDeletePost}
+                disabled={isDeletingPost}
+              >
+                {isDeletingPost ? 'Suppression...' : 'Supprimer le post'}
+              </button>
             </div>
           </div>
         </div>

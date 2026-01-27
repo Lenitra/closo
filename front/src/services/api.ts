@@ -305,6 +305,18 @@ class ApiService {
     return this.request<MediaWithPost[]>(`/media/group/${groupId}`)
   }
 
+  // ============================================================
+  // Admin
+  // ============================================================
+
+  async getAdminStats(): Promise<{ photo_count: number; user_count: number; total_storage_size: number }> {
+    return this.request<{ photo_count: number; user_count: number; total_storage_size: number }>('/admin/stats')
+  }
+
+  async getAdminGroups(): Promise<Group[]> {
+    return this.request<Group[]>('/admin/groups')
+  }
+
   getMediaUrl(mediaUrl: string): string {
     // Les URLs sont déjà sous forme /media/proxy/{file_id}
     return `${API_BASE_URL}${mediaUrl}`

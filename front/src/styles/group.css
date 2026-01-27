@@ -112,6 +112,7 @@
     top: calc(100% + var(--spacing-xs));
     right: 0;
     min-width: 200px;
+    max-width: calc(100vw - 32px);
     background: var(--color-white);
     border: 1px solid var(--color-gray-200);
     border-radius: var(--radius-lg);
@@ -119,6 +120,25 @@
     z-index: var(--z-dropdown, 100);
     padding: var(--spacing-xs);
     animation: dropdownFadeIn 0.15s ease;
+}
+
+/* Sur mobile, ajuster le positionnement pour que le menu soit toujours visible */
+@media (max-width: 768px) {
+    .dropdown-container {
+        position: relative;
+        z-index: 101;
+    }
+
+    .dropdown-menu {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 200px;
+        width: max-content;
+        max-width: calc(100vw - 24px);
+        animation: dropdownFadeInMobile 0.15s ease;
+        top: calc(100% + 8px);
+    }
 }
 
 @keyframes dropdownFadeIn {
@@ -129,6 +149,17 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes dropdownFadeInMobile {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
     }
 }
 
@@ -222,6 +253,9 @@
    Post Header
    -------------------------------------------------------------------------- */
 .post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--color-gray-100);
 }
@@ -244,6 +278,7 @@
     font-weight: 600;
     font-size: var(--font-size-sm);
     flex-shrink: 0;
+    object-fit: cover;
 }
 
 .author-info {
@@ -303,11 +338,50 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--transition-base);
+    transition: transform var(--transition-base), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.media-item img.loaded {
+    opacity: 1;
 }
 
 .media-item:hover img {
     transform: scale(1.05);
+}
+
+/* Skeleton loading animation */
+.media-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.03) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.media-item img.loaded ~ .media-item::before,
+.media-item.image-loaded::before {
+    display: none;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -525,7 +599,31 @@
 .group-header-actions {
     display: flex;
     gap: var(--spacing-sm);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+/* Sur mobile, masquer le texte des boutons et garder juste les icônes */
+@media (max-width: 640px) {
+    .group-header-actions {
+        gap: 8px;
+    }
+
+    .group-header-actions .btn {
+        padding: 8px;
+        min-width: auto;
+        font-size: 0;
+    }
+
+    .group-header-actions .btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .group-header-actions .btn-primary svg,
+    .group-header-actions .btn-secondary svg {
+        margin: 0;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -726,6 +824,7 @@
     font-weight: 600;
     font-size: var(--font-size-sm);
     flex-shrink: 0;
+    object-fit: cover;
 }
 
 .member-details {
@@ -752,6 +851,10 @@
 
 .member-role.admin {
     color: var(--color-primary);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display: inline;
 }
 
 .member-actions {
@@ -859,6 +962,7 @@
     font-weight: 600;
     font-size: var(--font-size-base);
     flex-shrink: 0;
+    object-fit: cover;
 }
 
 .member-modal-item .member-details {
@@ -886,6 +990,7 @@
 .member-modal-item .member-role {
     font-size: var(--font-size-sm);
     font-weight: 500;
+    color: var(--color-gray-500);
 }
 
 .member-role.creator {
@@ -894,6 +999,10 @@
 
 .member-role.admin {
     color: var(--color-primary);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display: inline;
 }
 
 .member-role.member {
@@ -1040,4 +1149,78 @@
 .leave-info {
     font-size: var(--font-size-sm) !important;
     color: var(--color-gray-500) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Admin Banner
+   -------------------------------------------------------------------------- */
+.admin-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(168, 85, 247, 0.12);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   Delete Post
+   -------------------------------------------------------------------------- */
+.btn-icon-danger {
+    background: transparent;
+    border: none;
+    color: var(--color-error, #ef4444);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-icon-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.btn-icon-danger:active {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.modal-delete-post {
+    max-width: 440px;
+}
+
+.delete-confirmation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) 0;
+}
+
+.delete-confirmation p {
+    font-size: var(--font-size-base);
+    color: var(--color-gray-700);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.delete-info {
+    font-size: var(--font-size-sm) !important;
+    color: var(--color-gray-500) !important;
+}
+
+.warning-icon {
+    color: var(--color-error, #ef4444);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

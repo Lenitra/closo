@@ -29,18 +29,28 @@ def get_all_medias(
 @router.get(
     "/group/{group_id}",
     response_model=list[MediaRead],
-    description="Récupère tous les médias d'un groupe avec les informations du post, triés par date décroissante.",
+    description="Récupère les médias d'un groupe avec pagination, triés par date décroissante.",
 )
 def get_medias_by_group_id(
     group_id: int,
+    skip: int = 0,
+    limit: int = 50,
     db: Session = Depends(get_db),
     current_user_id=Depends(require_role(["any"])),
 ):
     """
-    Récupère tous les médias d'un groupe avec les informations complètes du post.
+    Récupère les médias d'un groupe avec les informations complètes du post.
     Les médias sont triés par date de création du post (plus récents en premier).
+
+    Paramètres:
+    - skip: nombre de médias à ignorer (default: 0)
+    - limit: nombre maximum de médias à retourner (default: 50, max: 100)
     """
     from app.entities.post import Post
+
+    # Limiter le limit à 100 pour éviter les abus
+    if limit > 100:
+        limit = 100
 
     # Récupérer les médias avec eager loading des relations
     statement = (
@@ -52,6 +62,8 @@ def get_medias_by_group_id(
             selectinload(Media.post).selectinload(Post.group_member),
             selectinload(Media.post).selectinload(Post.group),
         )
+        .offset(skip)
+        .limit(limit)
     )
 
     medias = db.exec(statement).all()

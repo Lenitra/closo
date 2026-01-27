@@ -4,6 +4,7 @@ export interface User {
   username: string
   email: string
   avatar_url?: string | null
+  role_id?: number
 }
 
 // Types authentification
@@ -32,6 +33,8 @@ export interface Group {
   image_url: string | null
   invite_code: string | null
   creator?: User | null
+  member_count?: number
+  current_user_role?: number
 }
 
 export interface GroupMember {

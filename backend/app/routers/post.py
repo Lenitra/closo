@@ -82,21 +82,55 @@ async def create_post(
 
 @router.delete(
     "/{post_id}",
-    description="Supprime un post et tous ses médias associés (admin seulement).",
+    description="Supprime un post et tous ses médias associés. L'auteur, les admins ou le créateur du groupe peuvent supprimer.",
 )
 def delete_post(
     post_id: int,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(require_role(["any"])),  # TODO: Restreindre aux admins
+    current_user_id: int = Depends(require_role(["any"])),
 ):
     """
     Supprime un post et tous les médias associés.
     Les fichiers sont également supprimés du slave storage.
+
+    Permissions:
+    - L'auteur du post peut supprimer son propre post
+    - Les admins (role >= 2) du groupe peuvent supprimer n'importe quel post
+    - Le créateur (role == 3) du groupe peut supprimer n'importe quel post
     """
+    from app.entities.groupmember import GroupMember
+
     # Récupérer le post
     post = repo.get_by_id(db, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+
+    # Vérifier les permissions
+    # 1. Vérifier si l'utilisateur est l'auteur du post
+    is_author = False
+    if post.group_member_id:
+        post_author = groupmember_repo.get_by_id(db, post.group_member_id)
+        is_author = post_author and post_author.user_id == current_user_id
+
+    # 2. Vérifier si l'utilisateur est admin/créateur du groupe
+    current_member = groupmember_repo.get_by_user_and_group(
+        db, user_id=current_user_id, group_id=post.group_id
+    )
+    is_admin_or_creator = current_member and current_member.role >= 2
+
+    # 3. Vérifier si l'utilisateur est admin global (role_id == 3)
+    is_global_admin = False
+    if not is_author and not is_admin_or_creator:
+        from app.entities.user import User
+        current_user = db.get(User, current_user_id)
+        is_global_admin = current_user and current_user.role_id == 3
+
+    # L'utilisateur doit être soit l'auteur, soit admin/créateur du groupe, soit admin global
+    if not is_author and not is_admin_or_creator and not is_global_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous n'avez pas la permission de supprimer ce post"
+        )
 
     # Récupérer tous les médias associés au post
     medias = db.exec(

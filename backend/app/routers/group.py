@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 import secrets
 import string
-from app.entities.group import Group, GroupRead
+from app.entities.group import Group, GroupRead, GroupWithStats
 from app.entities.groupmember import GroupMember
 from app.repositories.group_repository import GroupRepository
 from app.repositories.groupmember_repository import GroupMemberRepository
@@ -20,14 +21,67 @@ member_repo = GroupMemberRepository()
 
 @router.get(
     "/",
-    response_model=list[GroupRead],
-    description="Route permettant à un utilisateur authentifié de récupérer la liste des groupes dont lesquel il fait partie.",
+    response_model=list[GroupWithStats],
+    description="Route permettant à un utilisateur authentifié de récupérer la liste des groupes dont lesquel il fait partie avec statistiques.",
 )
 def get_all_groups(
     db: Session = Depends(get_db), current_user_id=Depends(require_role(["any"]))
 ):
-    groups = repo.get_groups_by_user_id(db, current_user_id)
-    return groups
+    """
+    Récupère tous les groupes de l'utilisateur avec statistiques optimisées:
+    - Nombre de membres par groupe
+    - Rôle de l'utilisateur actuel dans chaque groupe
+
+    Utilise des requêtes optimisées pour éviter les requêtes N+1.
+    """
+    # Récupérer les groupes de l'utilisateur avec le créateur
+    statement = (
+        select(Group)
+        .join(GroupMember, GroupMember.group_id == Group.id)
+        .where(GroupMember.user_id == current_user_id)
+        .options(selectinload(Group.creator))
+    )
+    groups = db.exec(statement).all()
+
+    if not groups:
+        return []
+
+    # Récupérer les IDs des groupes
+    group_ids = [group.id for group in groups]
+
+    # Récupérer le nombre de membres pour chaque groupe en une seule requête
+    member_counts_statement = (
+        select(GroupMember.group_id, func.count(GroupMember.id).label('count'))
+        .where(GroupMember.group_id.in_(group_ids))
+        .group_by(GroupMember.group_id)
+    )
+    member_counts_result = db.exec(member_counts_statement).all()
+    member_counts = {group_id: count for group_id, count in member_counts_result}
+
+    # Récupérer le rôle de l'utilisateur actuel pour chaque groupe en une seule requête
+    roles_statement = (
+        select(GroupMember.group_id, GroupMember.role)
+        .where(GroupMember.group_id.in_(group_ids), GroupMember.user_id == current_user_id)
+    )
+    roles_result = db.exec(roles_statement).all()
+    user_roles = {group_id: role for group_id, role in roles_result}
+
+    # Construire la réponse avec statistiques pour chaque groupe
+    result = []
+    for group in groups:
+        group_with_stats = GroupWithStats(
+            id=group.id,
+            nom=group.nom,
+            description=group.description,
+            image_url=group.image_url,
+            invite_code=group.invite_code,
+            creator=group.creator,
+            member_count=member_counts.get(group.id, 0),
+            current_user_role=user_roles.get(group.id, 1)  # Default to role 1 if not found
+        )
+        result.append(group_with_stats)
+
+    return result
 
 
 @router.get(
@@ -108,16 +162,67 @@ def create_group(
 @router.delete(
     "/{id}",
     status_code=204,
-    description="Route disponible pour les utilisateurs authentifiés.",
+    description="Supprimer un groupe. Seul le créateur peut supprimer le groupe.",
 )
 def delete_group(
-    id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["Any"]))
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    # TODO: Ajouter une vérification pour s'assurer que l'utilisateur est bien le créateur du groupe
-    # ok = repo.delete(db, id)
-    ok = False
-    if not ok:
-        raise HTTPException(status_code=404, detail="Group not found")
+    """
+    Supprime un groupe et toutes ses données associées (posts, médias, membres).
+    Seul le créateur du groupe peut effectuer cette action.
+
+    Cascade de suppression:
+    1. Suppression des médias de tous les posts
+    2. Suppression de tous les posts
+    3. Suppression de tous les membres
+    4. Suppression du groupe
+    """
+    from app.entities.post import Post
+    from app.entities.media import Media
+
+    # Vérifier que le groupe existe
+    group = repo.get_by_id(db, id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Groupe non trouvé")
+
+    # Vérifier que l'utilisateur actuel est le créateur
+    statement = select(GroupMember).where(
+        GroupMember.group_id == id,
+        GroupMember.user_id == current_user.id
+    )
+    current_member = db.exec(statement).first()
+
+    if not current_member or current_member.role != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Seul le créateur du groupe peut le supprimer."
+        )
+
+    # 1. Supprimer tous les médias des posts du groupe
+    posts_statement = select(Post).where(Post.group_id == id)
+    posts = db.exec(posts_statement).all()
+
+    for post in posts:
+        # Supprimer les médias du post
+        media_statement = select(Media).where(Media.post_id == post.id)
+        medias = db.exec(media_statement).all()
+        for media in medias:
+            db.delete(media)
+
+        # Supprimer le post
+        db.delete(post)
+
+    # 2. Supprimer tous les membres du groupe
+    members_statement = select(GroupMember).where(GroupMember.group_id == id)
+    members = db.exec(members_statement).all()
+    for member in members:
+        db.delete(member)
+
+    # 3. Supprimer le groupe
+    db.delete(group)
+    db.commit()
 
 
 @router.get(

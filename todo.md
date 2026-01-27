@@ -47,15 +47,12 @@ Analyse complète du projet Closo (application sociale web) composé de:
 ### Backend
 | Priorité | Problème | Fichier | Impact |
 |----------|----------|---------|--------|
-| CRITIQUE | Requêtes N+1 pour chaque groupe | `Dashboard.tsx:48-63` | 21+ appels API pour 10 groupes |
 | MOYEN | `count()` charge tous les objets en mémoire | `base_repository.py:76-77` | Lent pour grandes tables |
-| MOYEN | Pas de pagination sur les endpoints | `media.py:22-26` | Charge 100k+ items |
 | MOYEN | Pas d'index sur les clés étrangères | `entities/media.py:11` | JOINs lents |
 
 ### Frontend
 | Priorité | Problème | Fichier | Impact |
 |----------|----------|---------|--------|
-| MOYEN | Lazy loading images sans skeleton/placeholder | `Group.tsx:544-555` | Layout shifts |
 | MOYEN | Pas de pagination pour les médias | `Group.tsx` | Charge toutes les images |
 
 ### Infrastructure

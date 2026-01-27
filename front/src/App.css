@@ -93,6 +93,11 @@
     cursor: pointer;
     border: none;
     text-decoration: none;
+    color: inherit;
+}
+
+.btn svg {
+    color: inherit;
 }
 
 .btn:disabled {

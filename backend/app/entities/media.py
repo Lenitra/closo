@@ -27,6 +27,7 @@ class UserBasic(SQLModel):
     id: int
     username: str
     email: str
+    avatar_url: Optional[str] = None
 
 
 class GroupBasic(SQLModel):
