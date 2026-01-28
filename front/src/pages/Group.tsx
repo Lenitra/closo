@@ -63,11 +63,15 @@ function GroupPage() {
   const [deletePostError, setDeletePostError] = useState<string | null>(null)
   const [isDeletingPost, setIsDeletingPost] = useState(false)
 
-  // Mode admin global : utilisateur avec role_id=3 qui n'est pas membre du groupe
-  const isGlobalAdminNotMember = user?.role_id === 3 && !groupMembers.find(m => m.user_id === user?.id)
+  // Edit post modal state
+  const [showEditPostModal, setShowEditPostModal] = useState(false)
+  const [editPostId, setEditPostId] = useState<number | null>(null)
+  const [editCaption, setEditCaption] = useState('')
+  const [editPostError, setEditPostError] = useState<string | null>(null)
+  const [isEditingPost, setIsEditingPost] = useState(false)
 
-  // Vérifier si l'utilisateur est admin ou créateur (role >= 2) ou admin global
-  const canManageGroup = (currentMember && currentMember.role >= 2) || isGlobalAdminNotMember
+  // Vérifier si l'utilisateur est admin ou créateur (role >= 2)
+  const canManageGroup = currentMember && currentMember.role >= 2
 
   // Redirection si non authentifié
   useEffect(() => {
@@ -330,10 +334,47 @@ function GroupPage() {
     }
   }
 
+  // Éditer un post
+  const handleEditPost = (postId: number, currentCaption: string | null) => {
+    setEditPostId(postId)
+    setEditCaption(currentCaption || '')
+    setEditPostError(null)
+    setShowEditPostModal(true)
+  }
+
+  const confirmEditPost = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editPostId) return
+
+    setIsEditingPost(true)
+    setEditPostError(null)
+
+    try {
+      await api.updatePost(editPostId, editCaption || null)
+      // Mettre à jour localement le caption dans les médias
+      setMedia(prev => prev.map(m =>
+        m.post?.id === editPostId && m.post
+          ? { ...m, post: { ...m.post, caption: editCaption || null } }
+          : m
+      ))
+      setShowEditPostModal(false)
+      setEditPostId(null)
+      setEditCaption('')
+    } catch (err) {
+      setEditPostError(err instanceof Error ? err.message : 'Erreur lors de la modification du post')
+    } finally {
+      setIsEditingPost(false)
+    }
+  }
+
+  // Vérifier si l'utilisateur peut éditer un post (seulement le créateur)
+  const canEditPost = (postUserId: number | undefined): boolean => {
+    if (!postUserId) return false
+    return postUserId === user?.id
+  }
+
   // Vérifier si l'utilisateur peut supprimer un post
   const canDeletePost = (postUserId: number | undefined): boolean => {
-    // Admin global peut supprimer n'importe quel post
-    if (isGlobalAdminNotMember) return true
     if (!currentMember || !postUserId) return false
     // L'auteur peut supprimer son post OU admin/créateur peut supprimer n'importe quel post
     return postUserId === user?.id || currentMember.role >= 2
@@ -512,20 +553,18 @@ function GroupPage() {
                 Inviter
               </button>
             )}
-            {!isGlobalAdminNotMember && (
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setUploadError(null)
-                  setShowUploadModal(true)
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Ajouter des photos
-              </button>
-            )}
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setUploadError(null)
+                setShowUploadModal(true)
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Ajouter des photos
+            </button>
 
             {/* Menu déroulant */}
             <div className="dropdown-container">
@@ -575,48 +614,34 @@ function GroupPage() {
                     </button>
                   )}
 
-                  {!isGlobalAdminNotMember && (
-                    <>
-                      <div className="dropdown-divider"></div>
+                  <div className="dropdown-divider"></div>
 
-                      <button
-                        className="dropdown-item dropdown-item-danger"
-                        onClick={handleLeaveGroup}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          {currentMember?.role === 3 ? (
-                            <>
-                              <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </>
-                          ) : (
-                            <>
-                              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </>
-                          )}
-                        </svg>
-                        {currentMember?.role === 3 ? 'Supprimer le groupe' : 'Quitter le groupe'}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="dropdown-item dropdown-item-danger"
+                    onClick={handleLeaveGroup}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      {currentMember?.role === 3 ? (
+                        <>
+                          <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </>
+                      ) : (
+                        <>
+                          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </>
+                      )}
+                    </svg>
+                    {currentMember?.role === 3 ? 'Supprimer le groupe' : 'Quitter le groupe'}
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </header>
-
-      {/* Bandeau mode administrateur */}
-      {isGlobalAdminNotMember && (
-        <div className="admin-banner">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Mode administrateur
-        </div>
-      )}
 
       {/* Contenu principal */}
       <main className="group-main">
@@ -646,18 +671,32 @@ function GroupPage() {
                         <span className="post-date">{post?.created_at && formatDate(post.created_at)}</span>
                       </div>
                     </div>
-                    {canDeletePost(post?.group_member?.user?.id) && post?.id && (
-                      <button
-                        className="btn-icon btn-icon-danger"
-                        onClick={() => handleDeletePost(post.id)}
-                        aria-label="Supprimer le post"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    )}
+                    <div className="post-actions">
+                      {canEditPost(post?.group_member?.user?.id) && post?.id && (
+                        <button
+                          className="btn-icon btn-icon-secondary"
+                          onClick={() => handleEditPost(post.id, post.caption)}
+                          aria-label="Modifier le post"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      )}
+                      {canDeletePost(post?.group_member?.user?.id) && post?.id && (
+                        <button
+                          className="btn-icon btn-icon-danger"
+                          onClick={() => handleDeletePost(post.id)}
+                          aria-label="Supprimer le post"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Galerie de médias */}
@@ -699,25 +738,19 @@ function GroupPage() {
                 </svg>
               </div>
               <h2>Aucune photo pour le moment</h2>
-              {isGlobalAdminNotMember ? (
-                <p>Ce groupe ne contient aucune photo.</p>
-              ) : (
-                <>
-                  <p>Soyez le premier a partager un moment avec ce groupe !</p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => {
-                      setUploadError(null)
-                      setShowUploadModal(true)
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Ajouter des photos
-                  </button>
-                </>
-              )}
+              <p>Soyez le premier a partager un moment avec ce groupe !</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setUploadError(null)
+                  setShowUploadModal(true)
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Ajouter des photos
+              </button>
             </div>
           )}
         </div>
@@ -1276,6 +1309,71 @@ function GroupPage() {
                 {isDeletingPost ? 'Suppression...' : 'Supprimer le post'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Édition Post */}
+      {showEditPostModal && (
+        <div className="modal-overlay" onClick={() => setShowEditPostModal(false)}>
+          <div className="modal modal-edit-post" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Modifier le post</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowEditPostModal(false)}
+                disabled={isEditingPost}
+                aria-label="Fermer"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={confirmEditPost}>
+              <div className="modal-body">
+                {editPostError && (
+                  <div className="modal-error">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                      <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                    </svg>
+                    <span>{editPostError}</span>
+                  </div>
+                )}
+
+                <div className="form-field">
+                  <label htmlFor="editCaption">Légende</label>
+                  <textarea
+                    id="editCaption"
+                    placeholder="Ajoutez une description..."
+                    value={editCaption}
+                    onChange={(e) => setEditCaption(e.target.value)}
+                    rows={4}
+                    disabled={isEditingPost}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditPostModal(false)}
+                  disabled={isEditingPost}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className={`btn btn-primary ${isEditingPost ? 'loading' : ''}`}
+                  disabled={isEditingPost}
+                >
+                  {isEditingPost ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

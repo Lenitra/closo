@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import GroupPage from './pages/Group'
 import Profile from './pages/Profile'
 import Admin from './pages/Admin'
+import AdminGroup from './pages/AdminGroup'
 import NotFound from './pages/NotFound'
 import './App.css'
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/group/:id" element={<GroupPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/groups/:groupId" element={<AdminGroup />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

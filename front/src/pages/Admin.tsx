@@ -278,7 +278,7 @@ function Admin() {
                       <div
                         key={group.id}
                         className="admin-group-card"
-                        onClick={() => navigate(`/group/${group.id}`)}
+                        onClick={() => navigate(`/admin/groups/${group.id}`)}
                       >
                         <div className="admin-group-image">
                           {group.image_url ? (

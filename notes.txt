@@ -1,3 +1,6 @@
 Dans le backend, delete_groupmember ajouter une sécurité pour que seul les admins du groupe ou le créateur du groupe puisse supprimer un membre du groupe.
 
+WIP - 
 Au niveau d'un post pouvoir modifier la description d'un post si on en est le créateur. Ajouter un icone à gauche de la poubelle pour éditer le post. Ca ouvre un modal avec un textarea prérempli avec la description actuelle. On peut modifier et sauvegarder. 
+
+Répertorie toutes les routes en backend et fait une vérification des permissions/autorisations pour chaque route. Et fait les ajustements nécessaires pour sécuriser l'accès aux ressources en fonction des rôles des utilisateurs.

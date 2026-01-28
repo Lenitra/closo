@@ -851,10 +851,6 @@
 
 .member-role.admin {
     color: var(--color-primary);
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    display: inline;
 }
 
 .member-actions {
@@ -999,10 +995,6 @@
 
 .member-role.admin {
     color: var(--color-primary);
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    display: inline;
 }
 
 .member-role.member {
@@ -1193,8 +1185,40 @@
     background: rgba(239, 68, 68, 0.2);
 }
 
+.post-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.btn-icon-secondary {
+    background: transparent;
+    border: none;
+    color: var(--color-gray-600);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-icon-secondary:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-primary);
+}
+
+.btn-icon-secondary:active {
+    background: rgba(99, 102, 241, 0.2);
+}
+
 .modal-delete-post {
     max-width: 440px;
+}
+
+.modal-edit-post {
+    max-width: 500px;
 }
 
 .delete-confirmation {

@@ -281,9 +281,11 @@ class ApiService {
     })
   }
 
-  async updatePost(postId: number, caption: string): Promise<Post> {
+  async updatePost(postId: number, caption: string | null): Promise<Post> {
     const formData = new FormData()
-    formData.append('caption', caption)
+    if (caption !== null) {
+      formData.append('caption', caption)
+    }
 
     return this.request<Post>(`/posts/${postId}`, {
       method: 'PATCH',
