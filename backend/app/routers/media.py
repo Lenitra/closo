@@ -5,8 +5,11 @@ from sqlalchemy.orm import selectinload
 from app.entities.media import Media, MediaRead
 from app.repositories.media_repository import MediaRepository
 from app.utils.core.database import get_db
-from app.utils.auth.roles import require_role
+from app.utils.auth.roles import get_current_user
 from app.utils.slave_manager.orchestrator import fetch_file_from_slave
+from app.entities.user import User
+from app.entities.groupmember import GroupMember
+from app.entities.post import Post
 import httpx
 
 
@@ -17,12 +20,17 @@ repo = MediaRepository()
 @router.get(
     "/",
     response_model=list[Media],
-    description="Route disponible pour les rôles: ['any']",
+    description="Liste tous les médias. Réservé aux administrateurs.",
 )
 def get_all_medias(
     db: Session = Depends(get_db),
-    current_user_id=Depends(require_role(["any"])),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     return repo.list(db)
 
 
@@ -36,17 +44,29 @@ def get_medias_by_group_id(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user_id=Depends(require_role(["any"])),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Récupère les médias d'un groupe avec les informations complètes du post.
     Les médias sont triés par date de création du post (plus récents en premier).
+    L'utilisateur doit être membre du groupe.
 
     Paramètres:
     - skip: nombre de médias à ignorer (default: 0)
     - limit: nombre maximum de médias à retourner (default: 50, max: 100)
     """
-    from app.entities.post import Post
+    # Vérifier que l'utilisateur est membre du groupe
+    member = db.exec(
+        select(GroupMember).where(
+            GroupMember.group_id == group_id,
+            GroupMember.user_id == current_user.id
+        )
+    ).first()
+    if not member and current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous devez être membre du groupe pour accéder à ses médias."
+        )
 
     # Limiter le limit à 100 pour éviter les abus
     if limit > 100:
@@ -72,9 +92,12 @@ def get_medias_by_group_id(
 
 @router.get(
     "/proxy/{file_id}",
-    description="Proxy pour récupérer les fichiers depuis les slaves de stockage.",
+    description="Proxy pour récupérer les fichiers depuis les slaves de stockage. Authentification requise.",
 )
-async def proxy_file(file_id: str):
+async def proxy_file(
+    file_id: str,
+    current_user: User = Depends(get_current_user),
+):
     """
     Route proxy pour servir les fichiers depuis les slaves de stockage.
     Le frontend appelle cette route, et le backend fetch le fichier depuis le slave.

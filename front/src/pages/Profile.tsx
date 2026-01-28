@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
+import { validateImageFile, formatValidationError } from "../utils/fileValidation";
 import logo from "../assets/logo.png";
 import "../styles/profile.css";
 
@@ -52,15 +53,11 @@ function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Le fichier doit etre une image");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setAvatarError("L'image ne doit pas depasser 5Mo");
+    // Valider le fichier avec validation sécurisée (taille, type MIME, extension)
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setAvatarError(formatValidationError(validationError));
+      e.target.value = ''; // Reset l'input
       return;
     }
 

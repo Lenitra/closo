@@ -8,6 +8,7 @@ from app.utils.auth.roles import get_current_user
 from app.utils.auth.auth import get_password_hash, verify_password
 from app.utils.core.database import get_db
 from app.utils.slave_manager.orchestrator import save_media
+from app.utils.file_validation import validate_image_file
 
 
 class UpdateUsernameRequest(BaseModel):
@@ -45,10 +46,16 @@ async def upload_avatar_for_current_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Upload avatar for current user"""
-    # Verify file is an image
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
+    """
+    Upload avatar for current user.
+
+    Validations:
+    - Taille maximale: 2 MB
+    - Types autorisés: JPEG, PNG, GIF, WebP
+    - Vérification des magic bytes (type MIME réel)
+    """
+    # Valider le fichier (taille, type MIME réel, extension)
+    validate_image_file(file, max_size=2 * 1024 * 1024)
 
     # Upload file to slave storage
     try:

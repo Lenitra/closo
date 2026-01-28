@@ -12,6 +12,7 @@ from app.utils.core.database import get_db
 from app.utils.auth.roles import require_role, get_current_user
 from app.entities.user import User
 from app.utils.slave_manager.orchestrator import save_media
+from app.utils.file_validation import validate_image_file
 
 
 router = APIRouter(prefix="/groups", tags=["Group"])
@@ -87,16 +88,30 @@ def get_all_groups(
 @router.get(
     "/{id}",
     response_model=GroupRead,
-    description="Route permettant de récupérer un groupe par son ID.",
+    description="Récupère un groupe par son ID. L'utilisateur doit être membre du groupe.",
 )
 def get_group_by_id(
     id: int,
     db: Session = Depends(get_db),
-    current_user_id=Depends(require_role(["any"])),
+    current_user: User = Depends(get_current_user),
 ):
     group = repo.get_by_id(db, id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+
+    # Vérifier que l'utilisateur est membre du groupe (ou admin global)
+    member = db.exec(
+        select(GroupMember).where(
+            GroupMember.group_id == id,
+            GroupMember.user_id == current_user.id
+        )
+    ).first()
+    if not member and current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous devez être membre du groupe pour accéder à ses informations."
+        )
+
     return group
 
 
@@ -228,13 +243,26 @@ def delete_group(
 @router.get(
     "/{id}/members/count",
     response_model=dict,
-    description="Route permettant de récupérer le nombre de membres d'un groupe.",
+    description="Récupère le nombre de membres d'un groupe. L'utilisateur doit être membre du groupe.",
 )
 def get_group_members_count(
     id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_role(["any"])),
+    current_user: User = Depends(get_current_user),
 ):
+    # Vérifier que l'utilisateur est membre du groupe (ou admin global)
+    member = db.exec(
+        select(GroupMember).where(
+            GroupMember.group_id == id,
+            GroupMember.user_id == current_user.id
+        )
+    ).first()
+    if not member and current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous devez être membre du groupe pour accéder à cette information."
+        )
+
     count = member_repo.count_members_in_group(db, id)
     return {"count": count}
 
@@ -410,7 +438,14 @@ async def upload_group_image(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Upload image for group"""
+    """
+    Upload image for group.
+
+    Validations:
+    - Taille maximale: 2 MB
+    - Types autorisés: JPEG, PNG, GIF, WebP
+    - Vérification des magic bytes (type MIME réel)
+    """
     # Get the group
     group = repo.get_by_id(db, id)
     if not group:
@@ -430,9 +465,8 @@ async def upload_group_image(
     if member.role < 2:
         raise HTTPException(status_code=403, detail="Only admins and creators can upload group image")
 
-    # Verify file is an image
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
+    # Valider le fichier (taille, type MIME réel, extension)
+    validate_image_file(file, max_size=2 * 1024 * 1024)
 
     # Upload file to slave storage
     try:

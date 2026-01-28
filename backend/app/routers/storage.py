@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session
-from app.utils.auth.roles import require_role
+from app.utils.auth.roles import get_current_user
 from app.utils.core.database import get_db
 from app.repositories.media_repository import MediaRepository
+from app.entities.user import User
 from app.utils.slave_manager.orchestrator import (
     list_all_files_from_slave,
     delete_file_from_slave,
@@ -15,14 +16,20 @@ media_repo = MediaRepository()
 
 @router.get(
     "/files",
-    description="Liste tous les fichiers du slave storage (admin seulement).",
+    description="Liste tous les fichiers du slave storage. Réservé aux administrateurs.",
 )
 def get_all_storage_files(
-    _=Depends(require_role(["any"])),  # TODO: Restreindre aux admins
+    current_user: User = Depends(get_current_user),
 ):
     """
     Récupère la liste de tous les fichiers stockés sur le slave storage.
+    Réservé aux administrateurs (role_id == 3).
     """
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     try:
         result = list_all_files_from_slave()
         return result
@@ -34,17 +41,23 @@ def get_all_storage_files(
 
 @router.get(
     "/files/{file_id}",
-    description="Récupère les informations d'un fichier incluant le post_id associé.",
+    description="Récupère les informations d'un fichier incluant le post_id associé. Réservé aux administrateurs.",
 )
 def get_storage_file(
     file_id: str,
     db: Session = Depends(get_db),
-    _=Depends(require_role(["any"])),  # TODO: Restreindre aux admins
+    current_user: User = Depends(get_current_user),
 ):
     """
     Récupère les informations d'un fichier en cherchant dans la base de données.
     Retourne le post_id si le fichier est associé à un post.
+    Réservé aux administrateurs (role_id == 3).
     """
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     try:
         # Extraire l'ID du fichier depuis l'URL (format: /media/proxy/{file_id})
         # Chercher dans la base de données les médias qui matchent
@@ -74,15 +87,21 @@ def get_storage_file(
 
 @router.delete(
     "/files/{file_id}",
-    description="Supprime un fichier du slave storage (admin seulement).",
+    description="Supprime un fichier du slave storage. Réservé aux administrateurs.",
 )
 def delete_storage_file(
     file_id: str,
-    _=Depends(require_role(["any"])),  # TODO: Restreindre aux admins
+    current_user: User = Depends(get_current_user),
 ):
     """
     Supprime un fichier du slave storage.
+    Réservé aux administrateurs (role_id == 3).
     """
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     try:
         result = delete_file_from_slave(file_id)
         return result

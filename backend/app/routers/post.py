@@ -10,6 +10,7 @@ from app.utils.core.database import get_db
 from app.utils.auth.roles import require_role
 from typing import Optional
 from app.utils.slave_manager import orchestrator
+from app.utils.file_validation import validate_media_files
 
 
 router = APIRouter(prefix="/posts", tags=["Post"])
@@ -35,7 +36,7 @@ def get_all_posts(
 @router.post(
     "/",
     response_model=Post,
-    description="Route disponible pour les rôles: ['any']",
+    description="Crée un post avec des médias. Maximum 10 fichiers de 2 MB chacun.",
 )
 async def create_post(
     group_id: int = Form(...),
@@ -44,6 +45,18 @@ async def create_post(
     db: Session = Depends(get_db),
     current_user_id: int = Depends(require_role(["any"])),
 ):
+    """
+    Crée un post avec des médias.
+
+    Validations:
+    - Taille maximale par fichier: 2 MB
+    - Maximum 10 fichiers par post
+    - Types autorisés: JPEG, PNG, GIF, WebP
+    - Vérification des magic bytes (type MIME réel)
+    """
+    # Valider les fichiers (taille, type, nombre)
+    validate_media_files(files, max_size_per_file=2 * 1024 * 1024, max_files=10)
+
     # Get the group member for this user and group
     group_member = groupmember_repo.get_by_user_and_group(
         db, user_id=current_user_id, group_id=group_id

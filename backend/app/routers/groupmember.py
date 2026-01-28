@@ -6,7 +6,7 @@ from app.entities.groupmember import GroupMember, GroupMemberRead
 from app.entities.post import Post
 from app.repositories.groupmember_repository import GroupMemberRepository
 from app.utils.core.database import get_db
-from app.utils.auth.roles import require_role, get_current_user
+from app.utils.auth.roles import get_current_user
 from app.entities.user import User
 
 
@@ -21,22 +21,32 @@ repo = GroupMemberRepository()
 @router.get(
     "/",
     response_model=list[GroupMember],
-    description="Route disponible pour les rôles: ['admin']",
+    description="Liste tous les membres de tous les groupes. Réservé aux administrateurs.",
 )
 def get_all_groupmembers(
-    db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     return repo.list(db)
 
 
 @router.get(
     "/{id}",
     response_model=GroupMember,
-    description="Route disponible pour les rôles: ['admin']",
+    description="Récupère un membre par son ID. Réservé aux administrateurs.",
 )
 def get_groupmember_by_id(
-    id: int, db: Session = Depends(get_db), current_user=Depends(require_role(["User"]))
+    id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     obj = repo.get_by_id(db, id)
     if not obj:
         raise HTTPException(status_code=404, detail="GroupMember not found")
@@ -47,27 +57,37 @@ def get_groupmember_by_id(
     "/",
     response_model=GroupMember,
     status_code=201,
-    description="Route disponible pour les rôles: ['admin']",
+    description="Crée un membre de groupe. Réservé aux administrateurs.",
 )
 def create_groupmember(
     payload: dict = Body(...),
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["User"])),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     return repo.save(db, payload)
 
 
 @router.put(
     "/{id}",
     response_model=GroupMember,
-    description="Route disponible pour les rôles: ['admin']",
+    description="Met à jour un membre de groupe. Réservé aux administrateurs.",
 )
 def update_groupmember(
     id: int,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["User"])),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès réservé aux administrateurs."
+        )
     obj = repo.save(db, id, payload)
     if not obj:
         raise HTTPException(status_code=404, detail="GroupMember not found")
@@ -189,16 +209,30 @@ def update_member_role(
 @router.get(
     "/group/{group_id}",
     response_model=list[GroupMemberRead],
-    description="Récupère tous les membres d'un groupe avec les informations utilisateur.",
+    description="Récupère tous les membres d'un groupe. L'utilisateur doit être membre du groupe.",
 )
 def get_members_by_group(
     group_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["any"])),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Récupère tous les membres d'un groupe avec eager loading des relations user.
+    L'utilisateur doit être membre du groupe ou admin global.
     """
+    # Vérifier que l'utilisateur est membre du groupe (ou admin global)
+    current_member = db.exec(
+        select(GroupMember).where(
+            GroupMember.group_id == group_id,
+            GroupMember.user_id == current_user.id
+        )
+    ).first()
+    if not current_member and current_user.role_id != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous devez être membre du groupe pour voir ses membres."
+        )
+
     statement = (
         select(GroupMember)
         .where(GroupMember.group_id == group_id)

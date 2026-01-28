@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../services/api'
 import type { Group, MediaWithPost, GroupMember } from '../types'
+import { validateImageFile, validateMediaFiles, formatValidationError } from '../utils/fileValidation'
 import logo from '../assets/logo.png'
 import '../styles/group.css'
 
@@ -120,7 +121,18 @@ function GroupPage() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files))
+      const files = Array.from(e.target.files)
+
+      // Valider les fichiers avant de les sélectionner
+      const validationError = validateMediaFiles(files)
+      if (validationError) {
+        setUploadError(formatValidationError(validationError))
+        e.target.value = '' // Reset l'input
+        return
+      }
+
+      setSelectedFiles(files)
+      setUploadError(null)
     }
   }
 
@@ -212,7 +224,18 @@ function GroupPage() {
 
   const handleSettingsImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setEditImageFile(e.target.files[0])
+      const file = e.target.files[0]
+
+      // Valider le fichier image avant de le sélectionner
+      const validationError = validateImageFile(file)
+      if (validationError) {
+        setSettingsError(formatValidationError(validationError))
+        e.target.value = '' // Reset l'input
+        return
+      }
+
+      setEditImageFile(file)
+      setSettingsError(null)
     }
   }
 
