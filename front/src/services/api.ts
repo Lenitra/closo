@@ -46,6 +46,15 @@ class ApiService {
     })
 
     if (!response.ok) {
+      // Gérer les erreurs d'authentification (401)
+      if (response.status === 401) {
+        // Supprimer le token invalide
+        localStorage.removeItem('access_token')
+        // Rediriger vers la page d'accueil (page de connexion)
+        window.location.href = '/'
+        throw new Error('Session expirée. Veuillez vous reconnecter.')
+      }
+
       const error = await response.json().catch(() => ({ detail: 'Une erreur est survenue' }))
       throw new Error(error.detail || `Erreur ${response.status}`)
     }
@@ -253,6 +262,14 @@ class ApiService {
             reject(new Error('Erreur lors du parsing de la réponse'))
           }
         } else {
+          // Gérer les erreurs d'authentification (401)
+          if (xhr.status === 401) {
+            localStorage.removeItem('access_token')
+            window.location.href = '/'
+            reject(new Error('Session expirée. Veuillez vous reconnecter.'))
+            return
+          }
+
           try {
             const error = JSON.parse(xhr.responseText)
             reject(new Error(error.detail || `Erreur ${xhr.status}`))

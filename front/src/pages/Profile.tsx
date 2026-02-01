@@ -34,7 +34,7 @@ function Profile() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate("/login");
+      navigate("/");
     }
   }, [authLoading, isAuthenticated, navigate]);
 

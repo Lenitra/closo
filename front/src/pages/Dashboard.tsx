@@ -27,7 +27,7 @@ function Dashboard() {
   // Rediriger si non authentifié
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate("/login");
+      navigate("/");
     }
   }, [authLoading, isAuthenticated, navigate]);
 

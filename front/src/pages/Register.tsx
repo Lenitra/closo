@@ -277,7 +277,7 @@ function Register() {
             </form>
 
             <p className="auth-switch">
-              Deja un compte ? <Link to="/login">Se connecter</Link>
+              Deja un compte ? <Link to="/">Se connecter</Link>
             </p>
           </div>
         </div>

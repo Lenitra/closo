@@ -11,6 +11,7 @@ from app.utils.auth.roles import require_role
 from typing import Optional
 from app.utils.slave_manager import orchestrator
 from app.utils.file_validation import validate_media_files
+from app.utils.image_compression import compress_upload_file, get_compression_stats
 
 
 router = APIRouter(prefix="/posts", tags=["Post"])
@@ -36,7 +37,7 @@ def get_all_posts(
 @router.post(
     "/",
     response_model=Post,
-    description="Crée un post avec des médias. Maximum 10 fichiers de 2 MB chacun.",
+    description="Crée un post avec des médias. Maximum 10 fichiers de 8 MB chacun.",
 )
 async def create_post(
     group_id: int = Form(...),
@@ -49,13 +50,13 @@ async def create_post(
     Crée un post avec des médias.
 
     Validations:
-    - Taille maximale par fichier: 2 MB
+    - Taille maximale par fichier: 8 MB
     - Maximum 10 fichiers par post
     - Types autorisés: JPEG, PNG, GIF, WebP
     - Vérification des magic bytes (type MIME réel)
     """
     # Valider les fichiers (taille, type, nombre)
-    validate_media_files(files, max_size_per_file=2 * 1024 * 1024, max_files=10)
+    validate_media_files(files)
 
     # Get the group member for this user and group
     group_member = groupmember_repo.get_by_user_and_group(
@@ -79,9 +80,26 @@ async def create_post(
     print(f"✅ Post created with ID: {created_post.id}")
 
     # Now create media entries linked to the post
+    total_original = 0
+    total_compressed = 0
+
     for idx, file in enumerate(files):
-        url = orchestrator.save_media(file.file)
-        print(f"  📷 Media {idx + 1} uploaded to slave, URL: {url}")
+        # Lire la taille originale
+        file.file.seek(0, 2)  # Aller a la fin
+        original_size = file.file.tell()
+        file.file.seek(0)  # Revenir au debut
+        total_original += original_size
+
+        # Compresser l'image
+        compressed_file = compress_upload_file(file)
+        compressed_size = compressed_file.seek(0, 2)
+        compressed_file.seek(0)
+        total_compressed += compressed_size
+
+        # Uploader le fichier compresse
+        url = orchestrator.save_media(compressed_file)
+        print(f"  📷 Media {idx + 1} uploaded (compressed: {original_size} -> {compressed_size} bytes), URL: {url}")
+
         new_media = Media(
             post_id=created_post.id,
             media_url=url,
@@ -89,6 +107,10 @@ async def create_post(
         )
         media_repo.save(db, new_media)
         print(f"  📷 Media {idx + 1} saved: {url}")
+
+    # Afficher les stats de compression
+    stats = get_compression_stats(total_original, total_compressed)
+    print(f"  📊 Compression: {stats['savings_percent']}% saved ({total_original} -> {total_compressed} bytes)")
 
     return created_post
 

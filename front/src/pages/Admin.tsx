@@ -25,7 +25,7 @@ function Admin() {
   useEffect(() => {
     if (!authLoading) {
       if (!isAuthenticated) {
-        navigate("/login");
+        navigate("/");
       } else if (user?.role_id !== 3) {
         navigate("/dashboard");
       }

@@ -52,7 +52,7 @@ function AdminGroup() {
   useEffect(() => {
     if (!authLoading) {
       if (!isAuthenticated) {
-        navigate('/login')
+        navigate('/')
       } else if (user?.role_id !== 3) {
         navigate('/dashboard')
       }
@@ -121,6 +121,17 @@ function AdminGroup() {
     setShowImageModal(false)
     setModalMediaList([])
     setCurrentMediaIndex(0)
+  }, [])
+
+  const handleDownloadImage = useCallback((mediaUrl: string, filename?: string) => {
+    const url = api.getMediaUrl(mediaUrl)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename || 'image.jpg'
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }, [])
 
   const handleImageLoad = useCallback((mediaId: number) => {
@@ -733,6 +744,21 @@ function AdminGroup() {
           <button className="image-modal-close" onClick={handleCloseImageModal}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <button
+            className="image-modal-download"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDownloadImage(selectedMedia.media_url, `image-${selectedMedia.id}.jpg`)
+            }}
+            aria-label="Télécharger l'image"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="7,10 12,15 17,10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
 

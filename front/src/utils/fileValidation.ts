@@ -3,8 +3,8 @@
  * Valide la taille, le type MIME et l'extension des fichiers avant upload.
  */
 
-// Taille maximale pour les images (2 MB en octets)
-export const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2 MB
+// Taille maximale pour les images (8 MB en octets)
+export const MAX_IMAGE_SIZE = 8 * 1024 * 1024 // 8 MB
 
 // Types MIME autorisés pour les images
 export const ALLOWED_IMAGE_TYPES = [
@@ -53,7 +53,7 @@ export function validateImageFile(file: File): FileValidationError | null {
     const maxSizeMB = (MAX_IMAGE_SIZE / (1024 * 1024)).toFixed(0)
     return {
       file: file.name,
-      message: `Fichier trop volumineux (${sizeMB} MB). Taille maximale: ${maxSizeMB} MB`,
+      message: `${file.name} trop volumineux (${sizeMB} MB / ${maxSizeMB} MB max)`,
     }
   }
 
@@ -90,10 +90,19 @@ export function validateMediaFiles(files: File[]): FileValidationError | null {
   for (let i = 0; i < files.length; i++) {
     const error = validateImageFile(files[i])
     if (error) {
-      // Ajouter le numéro du fichier au message d'erreur
+      const sizeMB = (files[i].size / (1024 * 1024)).toFixed(2)
+      const maxSizeMB = (MAX_IMAGE_SIZE / (1024 * 1024)).toFixed(0)
+
+      // Si c'est une erreur de taille, utiliser le format demandé
+      if (files[i].size > MAX_IMAGE_SIZE) {
+        return {
+          message: `${files[i].name} (#${i + 1}) trop volumineux (${sizeMB} MB / ${maxSizeMB} MB max)`,
+        }
+      }
+
       return {
         ...error,
-        message: `Fichier #${i + 1} (${files[i].name}): ${error.message}`,
+        message: `${files[i].name} (#${i + 1}) : ${error.message}`,
       }
     }
   }
@@ -105,8 +114,5 @@ export function validateMediaFiles(files: File[]): FileValidationError | null {
  * Formate un message d'erreur de validation pour l'affichage.
  */
 export function formatValidationError(error: FileValidationError): string {
-  if (error.file) {
-    return `${error.file}: ${error.message}`
-  }
   return error.message
 }

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { api } from '../services/api'
 import type { Group, MediaWithPost, GroupMember } from '../types'
 import { validateImageFile, validateMediaFiles, formatValidationError } from '../utils/fileValidation'
+import { compressImages, formatFileSize, getCompressionStats } from '../utils/imageCompression'
 import logo from '../assets/logo.png'
 import '../styles/group.css'
 
@@ -29,7 +30,8 @@ function GroupPage() {
   const [caption, setCaption] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  const [globalProgress, setGlobalProgress] = useState(0)
+  const [progressStatus, setProgressStatus] = useState<string>('Preparation...')
 
   // Settings modal state
   const [editName, setEditName] = useState('')
@@ -77,7 +79,7 @@ function GroupPage() {
   // Redirection si non authentifié
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate('/login')
+      navigate('/')
     }
   }, [authLoading, isAuthenticated, navigate])
 
@@ -142,24 +144,65 @@ function GroupPage() {
 
     setUploadError(null)
     setIsSubmitting(true)
-    setUploadProgress(0)
+    setGlobalProgress(0)
+    setProgressStatus('Preparation...')
 
     try {
+      // Phase 1: Compression des images (0-50%)
+      const totalFiles = selectedFiles.length
+      let filesCompressed = 0
+
+      const compressionResults = await compressImages(selectedFiles, (progress) => {
+        // Calculer la progression de la compression
+        const fileProgress = progress.progress / 100
+        const overallCompressionProgress = ((filesCompressed + fileProgress) / totalFiles) * 50
+        setGlobalProgress(Math.round(overallCompressionProgress))
+        setProgressStatus(`Compression: ${progress.file.split('/').pop()}`)
+
+        if (progress.progress === 100) {
+          filesCompressed++
+        }
+      })
+
+      const stats = getCompressionStats(compressionResults)
+      let statusMessage = 'Compression terminee'
+      if (stats.totalSavingsPercent > 0) {
+        statusMessage += ` - ${formatFileSize(stats.totalSavingsBytes)} economises (${stats.totalSavingsPercent}%)`
+      }
+
+      setGlobalProgress(50)
+      setProgressStatus(statusMessage)
+
+      // Extraire les fichiers compresses
+      const compressedFiles = compressionResults.map((r) => r.file)
+
+      // Phase 2: Upload des fichiers (50-100%)
+      setProgressStatus('Upload en cours...')
       await api.createPostWithProgress(
         parseInt(id),
         caption || null,
-        selectedFiles,
-        (progress) => setUploadProgress(progress)
+        compressedFiles,
+        (uploadProgress) => {
+          // Mapper la progression de l'upload de 0-100% vers 50-100% global
+          const globalUploadProgress = 50 + (uploadProgress / 2)
+          setGlobalProgress(Math.round(globalUploadProgress))
+        }
       )
+
+      setGlobalProgress(100)
+      setProgressStatus('Termine !')
+
+      // Fermer le modal et recharger
       setShowUploadModal(false)
       setSelectedFiles([])
       setCaption('')
-      setUploadProgress(0)
+      setGlobalProgress(0)
       await loadGroupData()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Erreur lors de l\'upload')
     } finally {
       setIsSubmitting(false)
+      setGlobalProgress(0)
     }
   }
 
@@ -197,6 +240,17 @@ function GroupPage() {
     setShowImageModal(false)
     setModalMediaList([])
     setCurrentMediaIndex(0)
+  }, [])
+
+  const handleDownloadImage = useCallback((mediaUrl: string, filename?: string) => {
+    const url = api.getMediaUrl(mediaUrl)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename || 'image.jpg'
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }, [])
 
   // Handle image load for skeleton
@@ -838,17 +892,17 @@ function GroupPage() {
                 </div>
               </div>
 
-              {/* Barre de progression */}
+              {/* Barre de progression globale */}
               {isSubmitting && (
                 <div className="upload-progress-container">
                   <div className="upload-progress-info">
-                    <span>Upload en cours...</span>
-                    <span className="upload-progress-percent">{uploadProgress}%</span>
+                    <span>{progressStatus}</span>
+                    <span className="upload-progress-percent">{globalProgress}%</span>
                   </div>
                   <div className="upload-progress-bar">
                     <div
                       className="upload-progress-fill"
-                      style={{ width: `${uploadProgress}%` }}
+                      style={{ width: `${globalProgress}%` }}
                     />
                   </div>
                 </div>
@@ -868,7 +922,7 @@ function GroupPage() {
                   className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}
                   disabled={isSubmitting || selectedFiles.length === 0}
                 >
-                  {isSubmitting ? `Upload... ${uploadProgress}%` : 'Publier'}
+                  {isSubmitting ? `${globalProgress}%` : 'Publier'}
                 </button>
               </div>
             </form>
@@ -1407,6 +1461,21 @@ function GroupPage() {
           <button className="image-modal-close" onClick={handleCloseImageModal}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <button
+            className="image-modal-download"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDownloadImage(selectedMedia.media_url, `image-${selectedMedia.id}.jpg`)
+            }}
+            aria-label="Télécharger l'image"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="7,10 12,15 17,10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
 

@@ -1,3 +1,1 @@
-Dans le backend, delete_groupmember ajouter une sécurité pour que seul les admins du groupe ou le créateur du groupe puisse supprimer un membre du groupe.
-
-Répertorie toutes les routes en backend et fait une vérification des permissions/autorisations pour chaque route. Et fait les ajustements nécessaires pour sécuriser l'accès aux ressources en fonction des rôles des utilisateurs.
+Sur le frontend, retravailler la page d'accueil pour qu'elle soit plus attractive et que dessus on puisse directement se connecter. Supprimer la page de connexion et revoir toutes les redirections de logout.

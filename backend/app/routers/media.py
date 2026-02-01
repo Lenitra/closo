@@ -92,15 +92,17 @@ def get_medias_by_group_id(
 
 @router.get(
     "/proxy/{file_id}",
-    description="Proxy pour récupérer les fichiers depuis les slaves de stockage. Authentification requise.",
+    description="Proxy pour récupérer les fichiers depuis les slaves de stockage. Accès public pour permettre l'affichage des images.",
 )
 async def proxy_file(
     file_id: str,
-    current_user: User = Depends(get_current_user),
 ):
     """
     Route proxy pour servir les fichiers depuis les slaves de stockage.
     Le frontend appelle cette route, et le backend fetch le fichier depuis le slave.
+
+    Note: Cette route est publique pour permettre l'affichage des images via <img> tags.
+    Les permissions d'accès aux médias sont gérées au niveau des routes qui retournent les URLs.
     """
     try:
         response = fetch_file_from_slave(file_id)

@@ -238,6 +238,212 @@
 }
 
 /* --------------------------------------------------------------------------
+   Hero Split Layout (with Login Form)
+   -------------------------------------------------------------------------- */
+.hero-split {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(64px + var(--spacing-2xl)) var(--spacing-lg) var(--spacing-2xl);
+}
+
+.hero-content-split {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+    align-items: center;
+}
+
+.hero-text-side {
+    text-align: center;
+    max-width: 600px;
+}
+
+.hero-text-side h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 800;
+    color: var(--color-gray-900);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    margin-bottom: var(--spacing-md);
+}
+
+.hero-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: center;
+    margin-top: var(--spacing-lg);
+}
+
+.hero-feature {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.hero-feature svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.hero-form-side {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Home Login Card */
+.home-login-card {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-gray-100);
+}
+
+.home-login-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.home-login-header h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-xs);
+}
+
+.home-login-header p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+}
+
+.home-login-error {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-lg);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.home-login-error svg {
+    flex-shrink: 0;
+}
+
+.home-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.home-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.home-form-field label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-gray-700);
+}
+
+.home-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.home-input-wrapper > svg:first-of-type {
+    position: absolute;
+    left: 12px;
+    color: var(--color-gray-400);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+
+.home-input-wrapper input {
+    width: 100%;
+    padding: 11px 12px 11px 40px;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family);
+    color: var(--color-gray-900);
+    background: var(--color-white);
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.home-input-wrapper input::placeholder {
+    color: var(--color-gray-400);
+}
+
+.home-input-wrapper input:hover {
+    border-color: var(--color-gray-300);
+}
+
+.home-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.home-input-wrapper:focus-within > svg:first-of-type {
+    color: var(--color-primary);
+}
+
+.home-toggle-password {
+    position: absolute;
+    right: 10px;
+    padding: 4px;
+    color: var(--color-gray-400);
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-toggle-password:hover {
+    color: var(--color-gray-600);
+}
+
+.home-input-wrapper:has(.home-toggle-password) input {
+    padding-right: 40px;
+}
+
+.home-login-footer {
+    margin-top: var(--spacing-lg);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.home-login-footer a {
+    color: var(--color-primary);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.home-login-footer a:hover {
+    color: var(--color-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
    Features Section
    -------------------------------------------------------------------------- */
 .features {
@@ -516,6 +722,42 @@
 
     .hero-content {
         max-width: 780px;
+    }
+
+    /* Hero Split Desktop */
+    .hero-split {
+        padding-top: calc(72px + var(--spacing-3xl));
+        padding-bottom: var(--spacing-3xl);
+    }
+
+    .hero-content-split {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-3xl);
+    }
+
+    .hero-text-side {
+        text-align: left;
+        flex: 1;
+        max-width: 520px;
+    }
+
+    .hero-text-side h1 {
+        font-size: clamp(2rem, 3.5vw, 2.75rem);
+    }
+
+    .hero-features {
+        align-items: flex-start;
+    }
+
+    .hero-form-side {
+        flex-shrink: 0;
+        width: 380px;
+    }
+
+    .home-login-card {
+        padding: var(--spacing-2xl);
     }
 
     .features-grid {

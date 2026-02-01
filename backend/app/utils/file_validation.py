@@ -13,8 +13,8 @@ except ImportError:
     HAS_MAGIC = False
 
 
-# Taille maximale pour les images (2 MB en octets)
-MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
+# Taille maximale acceptée pour l'upload (8 MB)
+MAX_UPLOAD_SIZE = 8 * 1024 * 1024  # 8 MB
 
 # Types MIME autorisés pour les images avec leurs magic bytes
 ALLOWED_IMAGE_MIMES = {
@@ -30,7 +30,7 @@ ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
 def validate_image_file(
     file: UploadFile,
-    max_size: int = MAX_IMAGE_SIZE,
+    max_size: int = MAX_UPLOAD_SIZE,
     allowed_mimes: Optional[dict] = None,
 ) -> None:
     """
@@ -38,7 +38,7 @@ def validate_image_file(
 
     Args:
         file: Le fichier uploadé par l'utilisateur
-        max_size: Taille maximale en octets (défaut: 2 MB)
+        max_size: Taille maximale en octets (défaut: 8 MB)
         allowed_mimes: Types MIME autorisés (défaut: ALLOWED_IMAGE_MIMES)
 
     Raises:
@@ -47,13 +47,15 @@ def validate_image_file(
     if allowed_mimes is None:
         allowed_mimes = ALLOWED_IMAGE_MIMES
 
+    filename = file.filename or "fichier"
+
     # 1. Vérifier l'extension du fichier
     if file.filename:
         extension = "." + file.filename.split(".")[-1].lower() if "." in file.filename else ""
         if extension not in ALLOWED_IMAGE_EXTENSIONS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Extension de fichier non autorisée. Extensions autorisées: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
+                detail=f"{filename} : extension non autorisée. Extensions acceptées: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
             )
     else:
         raise HTTPException(status_code=400, detail="Le nom de fichier est requis.")
@@ -65,39 +67,33 @@ def validate_image_file(
     # Réinitialiser le curseur du fichier pour qu'il puisse être lu à nouveau
     file.file.seek(0)
 
-    # 3. Vérifier la taille du fichier
+    # 3. Vérifier que le fichier n'est pas vide
+    if file_size == 0:
+        raise HTTPException(status_code=400, detail=f"{filename} : le fichier est vide.")
+
+    # 4. Vérifier la taille du fichier
     if file_size > max_size:
-        max_size_mb = max_size / (1024 * 1024)
-        actual_size_mb = file_size / (1024 * 1024)
+        actual_mb = file_size / (1024 * 1024)
+        max_mb = max_size / (1024 * 1024)
         raise HTTPException(
             status_code=400,
-            detail=f"Le fichier est trop volumineux ({actual_size_mb:.2f} MB). Taille maximale: {max_size_mb:.2f} MB",
+            detail=f"{filename} trop volumineux ({actual_mb:.2f} MB / {max_mb:.0f} MB max)",
         )
 
-    if file_size == 0:
-        raise HTTPException(status_code=400, detail="Le fichier est vide.")
-
-    # 4. Vérifier le type MIME réel avec magic bytes
+    # 5. Vérifier le type MIME réel avec magic bytes
     detected_mime = detect_mime_type(file_content)
 
     if detected_mime not in allowed_mimes:
         raise HTTPException(
             status_code=400,
-            detail=f"Type de fichier non autorisé. Le fichier doit être une image ({', '.join(allowed_mimes.keys())})",
+            detail=f"{filename} : type de fichier non autorisé. Types acceptés: JPEG, PNG, GIF, WebP",
         )
 
 
 def detect_mime_type(file_content: bytes) -> str:
     """
     Détecte le type MIME réel d'un fichier en lisant ses magic bytes.
-
-    Args:
-        file_content: Le contenu du fichier en bytes
-
-    Returns:
-        Le type MIME détecté (ex: "image/jpeg")
     """
-    # Vérifier les magic bytes pour chaque type d'image
     if file_content.startswith(b"\xFF\xD8\xFF"):
         return "image/jpeg"
     elif file_content.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -107,7 +103,6 @@ def detect_mime_type(file_content: bytes) -> str:
     elif file_content.startswith(b"RIFF") and b"WEBP" in file_content[:16]:
         return "image/webp"
     else:
-        # Utiliser python-magic comme fallback si disponible
         if HAS_MAGIC:
             try:
                 mime = magic.Magic(mime=True)
@@ -120,7 +115,7 @@ def detect_mime_type(file_content: bytes) -> str:
 
 def validate_media_files(
     files: list[UploadFile],
-    max_size_per_file: int = MAX_IMAGE_SIZE,
+    max_size_per_file: int = MAX_UPLOAD_SIZE,
     max_files: int = 10,
 ) -> None:
     """
@@ -140,16 +135,15 @@ def validate_media_files(
     if len(files) > max_files:
         raise HTTPException(
             status_code=400,
-            detail=f"Trop de fichiers. Maximum autorisé: {max_files}",
+            detail=f"Trop de fichiers. Maximum autorise: {max_files}",
         )
 
-    # Valider chaque fichier individuellement
     for idx, file in enumerate(files):
         try:
             validate_image_file(file, max_size=max_size_per_file)
         except HTTPException as e:
-            # Ajouter le numéro du fichier dans le message d'erreur
+            filename = file.filename or "fichier"
             raise HTTPException(
                 status_code=e.status_code,
-                detail=f"Fichier #{idx + 1}: {e.detail}",
+                detail=f"{filename} (#{idx + 1}) : {e.detail}",
             )

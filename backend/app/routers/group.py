@@ -442,7 +442,7 @@ async def upload_group_image(
     Upload image for group.
 
     Validations:
-    - Taille maximale: 2 MB
+    - Taille maximale: 8 MB
     - Types autorisés: JPEG, PNG, GIF, WebP
     - Vérification des magic bytes (type MIME réel)
     """
@@ -466,7 +466,7 @@ async def upload_group_image(
         raise HTTPException(status_code=403, detail="Only admins and creators can upload group image")
 
     # Valider le fichier (taille, type MIME réel, extension)
-    validate_image_file(file, max_size=2 * 1024 * 1024)
+    validate_image_file(file)
 
     # Upload file to slave storage
     try:
