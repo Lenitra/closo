@@ -613,6 +613,12 @@ function GroupPage() {
             <div>
               <h1>{group?.nom}</h1>
               {group?.description && <p>{group.description}</p>}
+              {/* Quota de photos */}
+              {group?.max_photos && (
+                <p className="group-quota-text">
+                  {media.length}/{group.max_photos} photos
+                </p>
+              )}
             </div>
           </div>
           <div className="group-header-actions">

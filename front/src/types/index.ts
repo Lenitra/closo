@@ -35,6 +35,7 @@ export interface Group {
   creator?: User | null
   member_count?: number
   current_user_role?: number
+  max_photos?: number
 }
 
 export interface GroupMember {

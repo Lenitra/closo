@@ -7,7 +7,9 @@
       "Bash(scriptsprodfix_nginx_config.bat)",
       "Bash(cp:*)",
       "Bash(grep:*)",
-      "Bash(powershell.exe -Command \"ssh -i ''C:\\\\Users\\\\thoma\\\\.ssh\\\\closo_prod_key'' -o StrictHostKeyChecking=no -o ConnectTimeout=10 debian@79.137.78.243 ''echo Connection OK'' 2>&1\")"
+      "Bash(powershell.exe -Command \"ssh -i ''C:\\\\Users\\\\thoma\\\\.ssh\\\\closo_prod_key'' -o StrictHostKeyChecking=no -o ConnectTimeout=10 debian@79.137.78.243 ''echo Connection OK'' 2>&1\")",
+      "Bash(find:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

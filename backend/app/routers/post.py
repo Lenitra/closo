@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from app.entities.post import Post
 from app.entities.media import Media
+from app.entities.group import Group
 from app.repositories.post_repository import PostRepository
 from app.repositories.media_repository import MediaRepository
 from app.repositories.groupmember_repository import GroupMemberRepository
@@ -66,6 +67,34 @@ async def create_post(
         raise HTTPException(
             status_code=403,
             detail=f"User {current_user_id} is not a member of group {group_id}",
+        )
+
+    # Vérifier la capacité du groupe
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Compter le nombre de photos existantes du groupe
+    current_photo_count = db.exec(
+        select(func.count(Media.id))
+        .select_from(Media)
+        .join(Post)
+        .where(Post.group_id == group_id)
+    ).one() or 0
+
+    # Vérifier si l'ajout de nouvelles photos dépasse la limite
+    photos_to_upload = len(files)
+    if current_photo_count + photos_to_upload > group.max_photos:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "storage_quota_exceeded",
+                "message": f"Cannot upload {photos_to_upload} photos. Group has {current_photo_count}/{group.max_photos} photos.",
+                "current_count": current_photo_count,
+                "limit": group.max_photos,
+                "remaining_capacity": group.max_photos - current_photo_count,
+                "photos_to_upload": photos_to_upload
+            }
         )
 
     # Create and persist the post
