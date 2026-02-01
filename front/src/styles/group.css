@@ -501,9 +501,7 @@
 
 @media (max-width: 640px) {
     .image-modal-download {
-        right: auto;
-        left: var(--spacing-lg);
-        top: calc(var(--spacing-lg) + 48px + var(--spacing-md));
+        right: calc(var(--spacing-lg) + 48px + 12px);
     }
 }
 
