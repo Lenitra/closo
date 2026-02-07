@@ -101,6 +101,7 @@ def get_admin_groups(
             image_url=group.image_url,
             invite_code=group.invite_code,
             creator=group.creator,
+            max_photos=group.max_photos,
             member_count=member_counts.get(group.id, 0),
             current_user_role=0,
         )
