@@ -101,6 +101,21 @@ export interface MediaWithPost extends Media {
   post?: Post | null
 }
 
+// Types Payment
+export interface CreatePaymentResponse {
+  client_secret: string
+  payment_id: number
+  publishable_key: string
+}
+
+export interface PaymentStatusResponse {
+  payment_id: number
+  status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
+  group_id: number
+  photos_added: number
+  new_max_photos: number
+}
+
 // Types API
 export interface ApiError {
   detail: string

@@ -10,6 +10,8 @@ import type {
   User,
   Post,
   MediaWithPost,
+  CreatePaymentResponse,
+  PaymentStatusResponse,
 } from '../types'
 
 // En production, le reverse proxy nginx route /api/ vers le backend
@@ -322,6 +324,21 @@ class ApiService {
 
   async getMediaByGroup(groupId: number): Promise<MediaWithPost[]> {
     return this.request<MediaWithPost[]>(`/media/group/${groupId}`)
+  }
+
+  // ============================================================
+  // Payments
+  // ============================================================
+
+  async createPaymentIntent(groupId: number): Promise<CreatePaymentResponse> {
+    return this.request<CreatePaymentResponse>('/payments/create-payment-intent', {
+      method: 'POST',
+      body: JSON.stringify({ group_id: groupId }),
+    })
+  }
+
+  async getPaymentStatus(paymentId: number): Promise<PaymentStatusResponse> {
+    return this.request<PaymentStatusResponse>(`/payments/status/${paymentId}`)
   }
 
   // ============================================================

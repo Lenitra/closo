@@ -5,6 +5,7 @@ import { api } from '../services/api'
 import type { Group, MediaWithPost, GroupMember } from '../types'
 import { validateImageFile, validateMediaFiles, formatValidationError } from '../utils/fileValidation'
 import { compressImages, formatFileSize, getCompressionStats } from '../utils/imageCompression'
+import PaymentModal from '../components/PaymentModal'
 import logo from '../assets/logo.png'
 import '../styles/group.css'
 
@@ -72,6 +73,9 @@ function GroupPage() {
   const [editCaption, setEditCaption] = useState('')
   const [editPostError, setEditPostError] = useState<string | null>(null)
   const [isEditingPost, setIsEditingPost] = useState(false)
+
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   // Vérifier si l'utilisateur est admin ou créateur (role >= 2)
   const canManageGroup = currentMember && currentMember.role >= 2
@@ -473,6 +477,11 @@ function GroupPage() {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [showDropdown])
 
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false)
+    await loadGroupData()
+  }
+
   const handleOpenInviteModal = () => {
     if (group?.invite_code) {
       setInviteCode(group.invite_code)
@@ -615,9 +624,19 @@ function GroupPage() {
               {group?.description && <p>{group.description}</p>}
               {/* Quota de photos */}
               {group?.max_photos && (
-                <p className="group-quota-text">
-                  {media.length}/{group.max_photos} photos
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <p className="group-quota-text" style={{ margin: 0 }}>
+                    {media.length}/{group.max_photos} photos
+                  </p>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowPaymentModal(true)}
+                    style={{ fontSize: 'var(--font-size-xs)', padding: '4px 10px' }}
+                    title="Ajouter 100 photos pour 1€"
+                  >
+                    + 100 photos (1€)
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -1523,6 +1542,15 @@ function GroupPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal Paiement */}
+      {showPaymentModal && id && (
+        <PaymentModal
+          groupId={parseInt(id)}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setShowPaymentModal(false)}
+        />
       )}
     </div>
   )
